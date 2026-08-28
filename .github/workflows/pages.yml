@@ -39,9 +39,29 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Pages を設定する(未設定なら有効化する)
+        id: pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
+
+      # 上で "Resource not accessible by integration" が出たときのために、
+      # 何を直せばよいかをログにそのまま出しておく
+      - name: 有効化できなかった場合の直し方を表示する
+        if: failure() && steps.pages.outcome == 'failure'
+        run: |
+          echo "::error::GitHub Pages を有効化できませんでした。次のどちらかです。"
+          echo ""
+          echo "1) ワークフローのトークンが読み取り専用になっている"
+          echo "   Settings > Actions > General > Workflow permissions を"
+          echo "   'Read and write permissions' に変更してから、このワークフローを再実行する。"
+          echo ""
+          echo "2) このプランでは private リポジトリで Pages が使えない"
+          echo "   Settings > Pages を開くと表示される。リポジトリを public にするか、"
+          echo "   GitHub Pro 以上にするか、commute-adjustment/ を別のサーバーに置く。"
+          echo ""
+          echo "アプリ自体はこのワークフローとは無関係に動く。commute-adjustment/ の"
+          echo "ファイル一式をどこに置いても、そのまま同じように使える。"
+          exit 1
 
       - name: アプリのフォルダだけをアップロードする
         uses: actions/upload-pages-artifact@v3
