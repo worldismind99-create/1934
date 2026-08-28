@@ -744,6 +744,24 @@ svg.leaflet-image-layer.leaflet-interactive path {
   #map{height:300px;border-radius:10px;margin:12px 0 4px;background:#e9edf1;}
   #mapFallback{padding:14px;background:#f7f8fa;border-radius:10px;margin:12px 0 4px;
     font-size:12.5px;color:#5b6470;}
+  .routes{margin:10px 0 2px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;}
+  .route{display:flex;align-items:center;gap:10px;padding:11px 12px;border-top:1px solid #eef0f3;}
+  .route:first-child{border-top:none;}
+  .route .bar{width:5px;align-self:stretch;border-radius:3px;flex:0 0 auto;}
+  .route .who{flex:1 1 auto;min-width:0;}
+  .route .nm{font-size:13px;font-weight:700;color:var(--navy-dark);}
+  .route .sb{font-size:11.5px;color:#8a8f96;}
+  .route .num{text-align:right;flex:0 0 auto;font-variant-numeric:tabular-nums;}
+  .route .km{font-size:16px;font-weight:700;color:var(--navy-dark);}
+  .route .min{font-size:11.5px;color:#5b6470;}
+  .route a.nav{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--navy);
+    border:1px solid #c7ccd3;border-radius:7px;padding:6px 9px;text-decoration:none;}
+  .route a.nav:active{background:#f0f2f5;}
+  .dist{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
+    background:#fff;border-radius:8px;padding:10px 12px;margin-bottom:10px;}
+  .dist .lb{font-size:11.5px;font-weight:700;opacity:.75;}
+  .dist .v{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .dist .sub{font-size:12px;opacity:.8;font-variant-numeric:tabular-nums;}
   .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:#5b6470;margin-bottom:8px;}
   .legend span{display:inline-flex;align-items:center;gap:5px;}
   .legend i{width:14px;height:4px;border-radius:2px;display:inline-block;}
@@ -788,6 +806,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <button class="sm" id="autoBtn" style="margin-bottom:2px;">地図に表示して位置関係を調べる</button>
     <div class="status" id="autoStatus"></div>
     <div id="mapArea"></div>
+    <div id="routeInfo"></div>
     <div id="geoOpts" style="margin-top:14px;"></div>
   </div>
 
@@ -929,7 +948,7 @@ var GEOS = [
    diagram:'通勤経路とは無関係な方向へ向かう場合'}
 ];
 
-var state = {pattern:null, geo:null, hint:null};
+var state = {pattern:null, geo:null, hint:null, routes:null};
 
 /* ---- 判定ロジック ---- */
 
@@ -972,6 +991,26 @@ function judge(pattern, geo){
   if(p1) phrases.push(p1);
   if(p2) phrases.push(p2);
   return {paid: paidSegment(geo), phrases: phrases};
+}
+
+// 道路距離（m）・所要時間（秒）の表示形
+function fmtKm(m){ return (m/1000).toFixed(1) + ' km'; }
+function fmtMin(sec){
+  var m = Math.round(sec/60);
+  if(m < 60) return '約' + m + '分';
+  return '約' + Math.floor(m/60) + '時間' + (m%60 ? (m%60) + '分' : '');
+}
+
+// 支給区間の道路距離（片道と、この出張での合計）を返す。経路が取れていなければ null。
+// 合計は「往路＋復路のうち支給対象になる部分」の合算。
+function paidDistance(pattern, geo, r){
+  if(!r) return null;
+  if(geo === 'A') return {one:0, total:0};
+  if(geo === 'B') return {one:r.officeDest.distance, total:r.officeDest.distance * 2};
+  if(geo === 'C') return {one:r.homeDest.distance,   total:r.homeDest.distance * 2};
+  // D（通勤経路と無関係な方向）は全区間支給。往路・復路の実際の経路をそのまま足す
+  if(pattern === 'hh') return {one:r.homeDest.distance, total:r.homeDest.distance * 2};
+  return {one:null, total:r.homeDest.distance + r.officeDest.distance};
 }
 
 /* ---- 画面の組み立て ---- */
@@ -1032,7 +1071,18 @@ function render(){
   var html = '';
   html += '<div class="result ' + (r.paid.adj ? 'adj' : 'non') + '">' +
           '<div class="hd">旅費の支給区間</div>' +
-          '<div class="bd">' + r.paid.text + '</div></div>';
+          '<div class="bd">' + r.paid.text + '</div>';
+  var pd = paidDistance(state.pattern, state.geo, state.routes);
+  if(pd){
+    html += '<div class="dist"><span class="lb">支給区間の道路距離</span>' +
+            '<span class="v">' + fmtKm(pd.total) + '</span>' +
+            '<span class="sub">' +
+              (pd.one === null ? 'この出張の全行程'
+                               : (pd.one === 0 ? '走行距離0km'
+                                               : '片道 ' + fmtKm(pd.one) + ' の往復')) +
+            '</span></div>';
+  }
+  html += '</div>';
   if(r.phrases.length){
     r.phrases.forEach(function(p, i){
       html += '<div class="phrase"><div class="lb">通勤調整の文言' +
@@ -1138,6 +1188,7 @@ document.getElementById('clearBtn').addEventListener('click', function(){
   ['schoolText','schoolAddr','homeText','destText'].forEach(function(id){
     document.getElementById(id).value = '';
   });
+  state.routes = null; renderRoutes(); render();
   updateMapLinks();
   document.getElementById('saveNote').textContent = '保存を消去しました。';
 });
@@ -1170,7 +1221,10 @@ function updateMapLinks(){
   if(fb) fb.innerHTML = html || '<span>職場・自宅・用務先を入力すると、ここにGoogleマップのリンクが出ます。</span>';
 }
 ['homeText','destText','schoolText'].forEach(function(id){
-  document.getElementById(id).addEventListener('input', updateMapLinks);
+  document.getElementById(id).addEventListener('input', function(){
+    updateMapLinks();
+    if(state.routes){ state.routes = null; renderRoutes(); render(); }
+  });
 });
 ['homeText','schoolText'].forEach(function(id){
   document.getElementById(id).addEventListener('change', saveInputs);
@@ -1228,12 +1282,7 @@ function ensureMap(){
     // タイルがまったく読めない環境（オフライン・通信制限）では地図をあきらめて案内を出す
     tiles.on('tileerror', function(){
       tileErrors++;
-      if(tileErrors >= 4 && mapObj){
-        try{ mapObj.remove(); }catch(e){}
-        mapObj = null; mapLayer = null; mapReady = false;
-        document.getElementById('mapArea').innerHTML = '';
-        showMapFallback();
-      }
+      if(tileErrors >= 4) hideMap();
     });
     tiles.addTo(mapObj);
     mapLayer = L.layerGroup().addTo(mapObj);
@@ -1243,12 +1292,24 @@ function ensureMap(){
   }catch(e){ return false; }
 }
 
+// 地図が使えないと分かったとき用。Leafletのインスタンスは壊さず隠すだけにする
+function hideMap(){
+  var m = document.getElementById('map');
+  if(m) m.style.display = 'none';
+  var lg = document.querySelector('#mapArea .legend');
+  if(lg) lg.style.display = 'none';
+  showMapFallback();
+}
+
 function showMapFallback(){
   var area = document.getElementById('mapArea');
-  if(document.getElementById('map') || document.getElementById('mapFallback')) return;
-  area.innerHTML = '<div id="mapFallback">この環境では地図を表示できません（オフライン、または通信が制限されています）。' +
+  if(document.getElementById('mapFallback')) return;
+  var m = document.getElementById('map');
+  if(m && m.style.display !== 'none') return;  // 地図が見えているなら案内は不要
+  area.insertAdjacentHTML('beforeend',
+    '<div id="mapFallback">この環境では地図を表示できません（オフライン、または通信が制限されています）。' +
     'Googleマップで3か所の位置を見比べて、下から選んでください。' +
-    '<div class="maplinks" id="mapFallbackLinks" style="margin-top:9px;"></div></div>';
+    '<div class="maplinks" id="mapFallbackLinks" style="margin-top:9px;"></div></div>');
   updateMapLinks();
 }
 
@@ -1258,8 +1319,51 @@ function osrm(a, b){
           '?overview=full&geometries=geojson';
   return fetch(u).then(function(r){ return r.json(); }).then(function(d){
     if(!d.routes || !d.routes.length) throw new Error('no route');
-    return d.routes[0].geometry.coordinates.map(function(c){ return [c[1], c[0]]; });
+    var rt = d.routes[0];
+    return {
+      line: rt.geometry.coordinates.map(function(c){ return [c[1], c[0]]; }),
+      distance: rt.distance,   // m
+      duration: rt.duration    // 秒
+    };
   });
+}
+
+/* ---- ナビ風の経路一覧 ---- */
+
+function navUrl(from, to){
+  return 'https://www.google.com/maps/dir/?api=1&travelmode=driving&origin=' +
+         encodeURIComponent(from) + '&destination=' + encodeURIComponent(to);
+}
+
+function renderRoutes(){
+  var box = document.getElementById('routeInfo');
+  if(!box) return;
+  var r = state.routes, f = fields();
+  if(!r){ box.innerHTML = ''; return; }
+  var rows = [
+    {key:'commute',    color:'#378ADD', nm:'通勤経路（自宅 ⇔ 職場）', sb:'この区間が通勤調整の対象',
+     from:f.home,   to:f.school},
+    {key:'homeDest',   color:'#D85A30', nm:'自宅 ⇔ 用務先',           sb:'自宅から直行・直帰する場合',
+     from:f.home,   to:f.dest},
+    {key:'officeDest', color:'#D85A30', nm:'職場 ⇔ 用務先',           sb:'職場から出発・帰着する場合',
+     from:f.school, to:f.dest}
+  ];
+  var html = '<div class="routes">';
+  rows.forEach(function(row){
+    var d = r[row.key];
+    html += '<div class="route">' +
+      '<span class="bar" style="background:' + row.color + '"></span>' +
+      '<span class="who"><span class="nm">' + row.nm + '</span>' +
+        '<span class="sb" style="display:block;">' + row.sb + '</span></span>' +
+      '<span class="num"><span class="km">' + fmtKm(d.distance) + '</span>' +
+        '<span class="min" style="display:block;">' + fmtMin(d.duration) + '</span></span>' +
+      '<a class="nav" target="_blank" rel="noopener" href="' + navUrl(row.from, row.to) + '">ナビ</a>' +
+      '</div>';
+  });
+  html += '</div>' +
+    '<p class="note">片道の道路距離・所要時間の目安です（自動車・OSRMの計算による参考値）。' +
+    '実際に支給される走行距離は、旅行命令に従ってください。「ナビ」を押すとGoogleマップの経路案内が開きます。</p>';
+  box.innerHTML = html;
 }
 
 function drawMap(home, office, dest){
@@ -1284,20 +1388,36 @@ function drawMap(home, office, dest){
     mapObj.invalidateSize();
     mapObj.fitBounds(L.latLngBounds(pts), {padding:[30,30]});
 
-    Promise.all([osrm(home, office), osrm(home, dest), osrm(office, dest)])
-      .then(function(r){
-        try{
-          if(!mapObj || !mapLayer) return;
-          mapLayer.removeLayer(straightCommute);
-          L.polyline(r[0], {color:'#378ADD', weight:6, opacity:.85}).addTo(mapLayer);
-          L.polyline(r[1], {color:'#D85A30', weight:4, opacity:.85, dashArray:'6 6'}).addTo(mapLayer);
-          L.polyline(r[2], {color:'#D85A30', weight:4, opacity:.5, dashArray:'2 8'}).addTo(mapLayer);
-          var all = pts.concat(r[0], r[1], r[2]);
-          mapObj.fitBounds(L.latLngBounds(all), {padding:[30,30]});
-        }catch(e){}
-      })
-      .catch(function(){ /* 道路経路が取れなくても直線表示のままでよい */ });
+    loadRoutes(home, office, dest, straightCommute, pts);
   }catch(e){ showMapFallback(); }
+}
+
+// 道路に沿った経路を取得して、地図の線・距離一覧・判定結果に反映する。
+// 地図が出せない環境でも距離だけは出せるので、地図とは切り離して実行する。
+function loadRoutes(home, office, dest, straightCommute, pts){
+  return Promise.all([osrm(home, office), osrm(home, dest), osrm(office, dest)])
+    .then(function(r){
+      state.routes = {commute:r[0], homeDest:r[1], officeDest:r[2]};
+      renderRoutes();
+      render();
+      try{
+        if(!mapObj || !mapLayer) return;
+        if(straightCommute) mapLayer.removeLayer(straightCommute);
+        L.polyline(r[0].line, {color:'#378ADD', weight:6, opacity:.85}).addTo(mapLayer);
+        L.polyline(r[1].line, {color:'#D85A30', weight:4, opacity:.85, dashArray:'6 6'}).addTo(mapLayer);
+        L.polyline(r[2].line, {color:'#D85A30', weight:4, opacity:.5, dashArray:'2 8'}).addTo(mapLayer);
+        var all = (pts || []).concat(r[0].line, r[1].line, r[2].line);
+        mapObj.fitBounds(L.latLngBounds(all), {padding:[30,30]});
+      }catch(e){}
+    })
+    .catch(function(){
+      // 経路サービスに届かないときは、地図の直線表示と手動判定はそのまま使える
+      state.routes = null;
+      document.getElementById('routeInfo').innerHTML =
+        '<p class="note">道路に沿った経路と距離は取得できませんでした。' +
+        '距離が必要なときは、上の「地図：〜」リンクからGoogleマップで確認してください。</p>';
+      render();
+    });
 }
 
 document.getElementById('autoBtn').addEventListener('click', function(){
@@ -1314,7 +1434,8 @@ document.getElementById('autoBtn').addEventListener('click', function(){
       var id = estimate(r[0], r[1], r[2]);
       applyHint(id);
       drawMap(r[0], r[1], r[2]);
-      st.textContent = '地図に表示しました。位置を確認して、下から選んでください。';
+      if(!mapReady) loadRoutes(r[0], r[1], r[2], null, null); // 地図が出せない環境でも距離は出す
+      st.textContent = '経路を表示しました。位置を確認して、下から選んでください。';
     })
     .catch(function(e){
       st.className='status err';
