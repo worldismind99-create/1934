@@ -786,7 +786,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <label class="f">職員の自宅住所</label>
     <input type="text" id="homeText" placeholder="例: 高松市林町1108-1" autocomplete="off">
     <label class="f">用務先</label>
-    <input type="text" id="destText" placeholder="例: 高松市総合教育センター" autocomplete="off">
+    <div class="combo">
+      <input type="text" id="destText" placeholder="選択、または直接入力（例: 高松市総合教育センター）" autocomplete="off">
+      <input type="hidden" id="destAddr">
+      <div class="combo-list" id="destList"></div>
+    </div>
     <div class="maplinks" id="mapLinks" style="margin-top:12px;"></div>
     <div class="savebar">
       <p class="note" id="saveNote">職場と自宅は、この端末にだけ保存され次回から自動で入ります。</p>
@@ -917,6 +921,14 @@ var SCHOOL_LIST = {
     ['直島中学校','直島町1580']
   ]
 };
+// よく使う用務先。ここに ['名称','住所（香川県を除く）'] を足せば候補が増える
+var DEST_PRESETS = {
+  'よく使う用務先': [
+    ['香川県教育センター','高松市郷東町587-1'],
+    ['高松市総合教育センター','高松市末広町5']
+  ]
+};
+
 /* ============================================================
    通勤調整の考え方（香川県 旅費制度の手引き p.17-18 準拠）
 
@@ -1117,20 +1129,25 @@ function fallbackCopy(text, done){
   document.body.removeChild(ta);
 }
 
-/* ---- 学校名のサジェスト ---- */
+/* ---- 名前を選ぶと住所が入る入力欄（学校名・よく使う用務先） ---- */
 
-(function initSchoolCombo(){
-  var input = document.getElementById('schoolText');
-  var hidden = document.getElementById('schoolAddr');
-  var list = document.getElementById('schoolList');
+// 一覧から選べば住所が隠しフィールドに入り、手で打ち直せば自由入力に戻る。
+function initCombo(inputId, hiddenId, listId, source, onPick){
+  var input = document.getElementById(inputId);
+  var hidden = document.getElementById(hiddenId);
+  var list = document.getElementById(listId);
   var flat = [];
-  for(var g in SCHOOL_LIST){
-    SCHOOL_LIST[g].forEach(function(pair){
+  for(var g in source){
+    source[g].forEach(function(pair){
       flat.push({name:pair[0], addr:'香川県'+pair[1], group:g});
     });
   }
   function close(){ list.style.display='none'; }
   function open(){
+    // もう一方の候補一覧が開いたままだと重なって見えるので閉じておく
+    Array.prototype.forEach.call(document.querySelectorAll('.combo-list'), function(el){
+      if(el !== list) el.style.display = 'none';
+    });
     var f = input.value.trim();
     list.innerHTML = ''; var lastG = null, any = false;
     flat.forEach(function(it){
@@ -1146,7 +1163,8 @@ function fallbackCopy(text, done){
       el.addEventListener('mousedown', function(e){
         e.preventDefault();
         input.value = it.name; hidden.value = it.addr;
-        close(); updateMapLinks(); saveInputs();
+        close(); updateMapLinks(); resetEstimates();
+        if(onPick) onPick();
       });
       list.appendChild(el);
     });
@@ -1155,7 +1173,25 @@ function fallbackCopy(text, done){
   input.addEventListener('focus', open);
   input.addEventListener('input', function(){ hidden.value=''; open(); });
   input.addEventListener('blur', function(){ setTimeout(close, 180); });
-})();
+}
+
+initCombo('schoolText', 'schoolAddr', 'schoolList', SCHOOL_LIST, saveInputs);
+initCombo('destText',   'destAddr',   'destList',   DEST_PRESETS, null);
+
+// 場所が変わったら、前に調べた経路と「おそらくこれ」は当てにならないので消す
+function resetEstimates(){
+  var changed = false;
+  if(state.routes){ state.routes = null; changed = true; }
+  if(state.hint){
+    state.hint = null;
+    Array.prototype.forEach.call(document.getElementById('geoOpts').children, function(el){
+      var badge = el.querySelector('.hint');
+      if(badge) badge.remove();
+    });
+    changed = true;
+  }
+  if(changed){ renderRoutes(); render(); }
+}
 
 /* ---- 職場・自宅の保存（この端末の中だけ） ---- */
 
@@ -1185,10 +1221,10 @@ function restoreInputs(){
 
 document.getElementById('clearBtn').addEventListener('click', function(){
   try{ localStorage.removeItem(STORE_KEY); }catch(e){}
-  ['schoolText','schoolAddr','homeText','destText'].forEach(function(id){
+  ['schoolText','schoolAddr','homeText','destText','destAddr'].forEach(function(id){
     document.getElementById(id).value = '';
   });
-  state.routes = null; renderRoutes(); render();
+  resetEstimates();
   updateMapLinks();
   document.getElementById('saveNote').textContent = '保存を消去しました。';
 });
@@ -1199,7 +1235,7 @@ function fields(){
   return {
     school: document.getElementById('schoolAddr').value || document.getElementById('schoolText').value.trim(),
     home:   document.getElementById('homeText').value.trim(),
-    dest:   document.getElementById('destText').value.trim()
+    dest:   document.getElementById('destAddr').value || document.getElementById('destText').value.trim()
   };
 }
 
@@ -1223,7 +1259,7 @@ function updateMapLinks(){
 ['homeText','destText','schoolText'].forEach(function(id){
   document.getElementById(id).addEventListener('input', function(){
     updateMapLinks();
-    if(state.routes){ state.routes = null; renderRoutes(); render(); }
+    resetEstimates();
   });
 });
 ['homeText','schoolText'].forEach(function(id){
