@@ -37,14 +37,15 @@ def norm(rng):
 
 
 def put(cell, value=None, size=8, bold=False, italic=False, align="left",
-        valign="center", wrap=False, merge=None, border=None, fmt=None):
+        valign="center", wrap=False, merge=None, border=None, fmt=None, shrink=False):
     if merge:
         ws.merge_cells(merge)
     c = ws[cell]
     if value is not None:
         c.value = value
     c.font = f(size, bold, italic)
-    c.alignment = Alignment(horizontal=align, vertical=valign, wrap_text=wrap)
+    c.alignment = Alignment(horizontal=align, vertical=valign, wrap_text=wrap,
+                            shrink_to_fit=shrink)
     if fmt:
         c.number_format = fmt
     if border:
@@ -71,24 +72,24 @@ def outline(rng, side=thin):
 # ------------------------------------------------------- columns (A4 width)
 # total ≈ 751 px ≈ 198.7 mm; A4 (210 mm) less 2 × 0.22" margins ≈ 198.8 mm
 widths = {"A": 1.2, "B": 7.1, "C": 7.1, "D": 7.1, "E": 7.1, "F": 7.1,
-          "G": 7.1, "H": 7.1, "I": 7.1, "J": 9.0, "K": 19.0, "L": 10.5, "M": 1.2}
+          "G": 7.1, "H": 7.1, "I": 7.1, "J": 9.0, "K": 20.0, "L": 9.5, "M": 1.2}
 for col, w in widths.items():
     ws.column_dimensions[col].width = w
 
 # ------------------------------------------------------- dealer header
-put("B1", "EXCELLENT AUTO SALES AND LEASING", size=9, bold=True, merge="B1:E1")
-put("B2", "6419 ALONDRA BLVD", size=8, merge="B2:E2")
-put("B3", "PARAMOUNT, CA 90723", size=8, merge="B3:E3")
-put("B4", "Tel: (310)906-8117      Fax: (562)529-7997", size=8, merge="B4:E4")
+put("B1", "EXCELLENT AUTO SALES AND LEASING", size=10, bold=True, merge="B1:F1")
+put("B2", "6419 ALONDRA BLVD", size=8.5, merge="B2:F2")
+put("B3", "PARAMOUNT, CA 90723", size=8.5, merge="B3:F3")
+put("B4", "Tel: (310)906-8117      Fax: (562)529-7997", size=8.5, merge="B4:F4")
 
-put("F1", "RETAIL PURCHASE AGREEMENT", size=12, bold=True, align="center", merge="F1:J2")
+put("G1", "RETAIL PURCHASE AGREEMENT", size=14, bold=True, align="center", merge="G1:L2")
 
-put("K1", "CUST#", size=8, align="right")
-put("L1", None, size=9, border=underline)
-put("K2", "Deal Number:", size=8, align="right")
-put("L2", None, size=9, border=underline)
+put("K3", "CUST#", size=8, align="right")
+put("L3", None, size=9, border=underline)
+put("K4", "Deal Number:", size=8, align="right")
+put("L4", None, size=9, border=underline)
 
-for r, h in ((1, 18), (2, 14), (3, 13), (4, 13), (5, 6)):
+for r, h in ((1, 20), (2, 14), (3, 13), (4, 13), (5, 6)):
     ws.row_dimensions[r].height = h
 
 # ------------------------------------------------------- purchaser block
@@ -136,21 +137,22 @@ ws.row_dimensions[13].height = 18
 
 put("B14", "VIN", size=7.5, bold=True, align="center", merge="B14:C14")
 put("D14", "(Vehicle)", size=7, italic=True, align="center")
-put("E14", "ODOMETER READING     ☐ Not Accurate", size=7, bold=True, align="center", merge="E14:F14")
+put("E14", "ODOMETER READING\n☐ Not Accurate", size=6.5, bold=True, align="center",
+    wrap=True, merge="E14:F14")
 put("G14", "SALESPERSON", size=7.5, bold=True, align="center", merge="G14:I14")
-ws.row_dimensions[14].height = 13
+ws.row_dimensions[14].height = 18
 
 for rng in ("B15:C15", "E15:F15", "G15:I15"):
     put(rng.split(":")[0], None, size=9, align="center", merge=rng)
     outline(rng)
 ws.row_dimensions[15].height = 18
 
-put("B16", "THE VEHICLE IS:      ☐ NEW      ☐ USED", size=7.5, bold=True, merge="B16:D16")
+put("B16", "THE VEHICLE IS:\n☐ NEW      ☐ USED", size=7, bold=True, wrap=True, merge="B16:D16")
 put("E16", "PRIOR USE DISCLOSURE:   ☐ DEMONSTRATOR   ☐ PREVIOUSLY LEASED   "
            "☐ EXECUTIVE VEHICLE   ☐ RENTAL   ☐ OTHER ______",
-    size=6.5, bold=True, wrap=True, merge="E16:I16")
+    size=6, bold=True, wrap=True, merge="E16:I16")
 outline("B16:I16")
-ws.row_dimensions[16].height = 18
+ws.row_dimensions[16].height = 22
 
 # ------------------------------------------------------- left column: statements
 WARRANTY = ("We are selling this Vehicle to You AS-IS and We expressly disclaim all warranties, express and "
@@ -203,10 +205,10 @@ ws.row_dimensions[35].height = 15
 
 
 def trade_block(r0, label):
-    put("B%d" % r0, "Lienholder Name:", size=7)
-    put("C%d" % r0, None, size=8, merge="C%d:I%d" % (r0, r0), border=underline)
-    put("B%d" % (r0 + 1), "Lienholder Address:", size=7)
-    put("C%d" % (r0 + 1), None, size=8, merge="C%d:I%d" % (r0 + 1, r0 + 1), border=underline)
+    put("B%d" % r0, "Lienholder Name:", size=7, merge="B%d:C%d" % (r0, r0))
+    put("D%d" % r0, None, size=8, merge="D%d:I%d" % (r0, r0), border=underline)
+    put("B%d" % (r0 + 1), "Lienholder Address:", size=7, merge="B%d:C%d" % (r0 + 1, r0 + 1))
+    put("D%d" % (r0 + 1), None, size=8, merge="D%d:I%d" % (r0 + 1, r0 + 1), border=underline)
 
     r = r0 + 2
     for col, lbl in (("B", "Year:"), ("D", "Make:"), ("F", "Model:"), ("H", "Color:")):
@@ -217,19 +219,18 @@ def trade_block(r0, label):
     r = r0 + 3
     put("B%d" % r, "VIN:", size=7)
     put("C%d" % r, None, size=8, merge="C%d:D%d" % (r, r), border=underline)
-    put("E%d" % r, label, size=6.5, italic=True, align="center")
-    put("F%d" % r, "Odometer:", size=7)
-    put("G%d" % r, None, size=8, border=underline)
-    put("H%d" % r, "☐ Not Accurate", size=6.5, merge="H%d:I%d" % (r, r))
+    put("E%d" % r, "Odometer:", size=6.5)
+    put("F%d" % r, None, size=8, border=underline)
+    put("G%d" % r, "☐ Not Accurate        %s" % label, size=6.5, merge="G%d:I%d" % (r, r))
 
     r = r0 + 4
-    put("B%d" % r, "Trade Allowance:", size=7)
-    put("C%d" % r, None, size=8, fmt=MONEY, border=underline)
-    put("D%d" % r, "Balance Owed to Lienholder:", size=7, merge="D%d:E%d" % (r, r))
-    put("F%d" % r, None, size=8, fmt=MONEY, merge="F%d:G%d" % (r, r), border=underline)
+    put("B%d" % r, "Trade Allowance:", size=7, merge="B%d:C%d" % (r, r))
+    put("D%d" % r, None, size=8, fmt=MONEY, border=underline)
+    put("E%d" % r, "Balance Owed to Lienholder:", size=7, merge="E%d:G%d" % (r, r))
+    put("H%d" % r, None, size=8, fmt=MONEY, merge="H%d:I%d" % (r, r), border=underline)
 
     for rr in range(r0, r0 + 5):
-        ws.row_dimensions[rr].height = 13
+        ws.row_dimensions[rr].height = 12.5
 
 
 trade_block(36, "(Trade Vehicle 1)")
@@ -266,7 +267,7 @@ GREY = PatternFill("solid", fgColor="EFEFEF")
 
 
 def price_row(r, label, bold=False, formula=None, shade=False):
-    put("K%d" % r, label, size=8, bold=bold)
+    put("K%d" % r, label, size=7.5, bold=bold, shrink=True)
     put("L%d" % r, formula, size=9, bold=bold, align="right", fmt=MONEY)
     for cell in ("K%d" % r, "L%d" % r):
         ws[cell].border = box
@@ -275,7 +276,7 @@ def price_row(r, label, bold=False, formula=None, shade=False):
 
 
 price_row(R_BASE, "Base Selling Price", bold=True)
-put("K%d" % R_OPT_HDR, "Optional Items:", size=8, italic=True)
+put("K%d" % R_OPT_HDR, "Optional Items:", size=7.5, italic=True)
 for cell in ("K%d" % R_OPT_HDR, "L%d" % R_OPT_HDR):
     ws[cell].border = box
 for r in range(R_OPT_FIRST, R_OPT_LAST + 1):
@@ -302,16 +303,16 @@ price_row(R_FINANCED, "AMOUNT TO BE FINANCED", bold=True, shade=True,
           formula="=L%d-L%d-L%d-L%d" % (R_TOTAL_DUE, R_DOWN, R_REBATES, R_CASH_DUE))
 
 # ------------------------------------------------------- approvals & consent
-ws.row_dimensions[58].height = 8
+ws.row_dimensions[58].height = 7
 for col in "BCDEFGHIJKL":
     ws["%s59" % col].border = Border(top=medium)
 
 ws.row_dimensions[59].height = 24
-put("B59", "Customer Approval:", size=9, bold=True, valign="bottom", merge="B59:C59")
+put("B59", "Customer Approval:", size=8, bold=True, valign="bottom", merge="B59:C59")
 put("D59", None, size=10, valign="bottom", merge="D59:F59")
-put("G59", "Management Approval:", size=9, bold=True, valign="bottom", merge="G59:H59")
-put("I59", None, size=10, valign="bottom", merge="I59:L59")
-for col in ("D", "E", "F", "I", "J", "K", "L"):
+put("G59", "Management Approval:", size=8, bold=True, valign="bottom", merge="G59:I59")
+put("J59", None, size=10, valign="bottom", merge="J59:L59")
+for col in ("D", "E", "F", "J", "K", "L"):
     b = ws["%s59" % col].border
     ws["%s59" % col].border = Border(top=b.top, bottom=thin)
 
@@ -323,10 +324,10 @@ CONSENT = ("By signing this authorization form, you certify that the above perso
            "information only. This is not an offer or contract for sale.")
 put("B60", CONSENT, size=6.5, wrap=True, valign="top", merge="B60:L63")
 for r in range(60, 64):
-    ws.row_dimensions[r].height = 10
+    ws.row_dimensions[r].height = 9
 outline("B59:L63")
 
-put("B64", "IMPORTANT TERMS AND CONDITIONS FOLLOW", size=9, bold=True, merge="B64:F64")
+put("B64", "IMPORTANT TERMS AND CONDITIONS FOLLOW", size=9, bold=True, merge="B64:G64")
 ws.row_dimensions[64].height = 16
 
 # ------------------------------------------------------- page setup (A4, full page)
@@ -358,9 +359,9 @@ def g(row, a, b, c=None, bold=False, size=10):
 g(1, "RETAIL PURCHASE AGREEMENT", "空白フォーム / Blank form - 記入ガイド (A4 1ページ)", bold=True, size=12)
 g(3, "入力欄 (Input)", "説明", "記入例 (Example)", bold=True)
 rows = [
-    ("B1:E4", "ディーラー名・住所・Tel / Fax", "EXCELLENT AUTO SALES..."),
+    ("B1:F4", "ディーラー名・住所・Tel / Fax", "EXCELLENT AUTO SALES..."),
     ("I3:J9", "自動車メーカーのエンブレム枠 (画像を差し替え)", "日産エンブレム(サンプル)"),
-    ("L1 / L2", "CUST# / Deal Number", "408132 / 343179"),
+    ("L3 / L4", "CUST# / Deal Number", "408132 / 343179"),
     ("D6:H6 / L6", "Purchaser's Name(s) / Date", "JOHN DOE / 08/06/2026"),
     ("D7:H7 / L7", "Address(es) / County", "541 RUBY RIVER DR / MADISON"),
     ("D8:H8 / L8", "Telephone (1) / Telephone (2)", "555-0100 / N/A"),
@@ -375,7 +376,7 @@ rows = [
     ("L39", "LESS: TRADE IN ALLOWANCE", "$0.00"),
     ("L41:L50", "各種税金・手数料 (SALES TAX 〜 Govt Vehicle Inspection Replacement Fee)", "$225.00"),
     ("L53 / L54 / L55", "DOWN PAYMENT / REBATES / LESS CASH DUE AT DELIVERY", "$0.00 / $2,000.00 / $0.00"),
-    ("D59 / I59", "Customer Approval / Management Approval (署名欄)", "署名"),
+    ("D59 / J59", "Customer Approval / Management Approval (署名欄)", "署名"),
 ]
 r = 4
 for a, b, c in rows:
