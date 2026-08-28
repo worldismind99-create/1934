@@ -1,22 +1,31 @@
 # 通勤調整判定ツール(commute-adjustment/)を GitHub Pages に公開する。
 #
-# 初回実行時に configure-pages が Pages 自体を有効化するため、
-# リポジトリの Settings を手で触る必要はない。
-# 公開されるのは commute-adjustment/ の中身だけで、サーバー側のコードは含まない。
+# 公開経路は2つあり、リポジトリの状態に合う方を選ぶ。
+#
+#  A) gh-pages ブランチ方式(設定1か所で済む・こちらが既定)
+#     Settings > Pages > Source を "Deploy from a branch" にして
+#     gh-pages ブランチの / (root) を選ぶだけ。GitHub側がビルドするので、
+#     このワークフローもActionsのトークン権限も不要。
+#     アプリを更新したら gh-pages ブランチにも反映すること。
+#
+#  B) このワークフロー方式(Actions から公開する)
+#     Settings > Actions > General > Workflow permissions が
+#     "Read and write permissions" である必要がある。読み取り専用だと
+#     configure-pages が "Resource not accessible by integration" で失敗する。
+#     条件が整ってから、Actions の画面で手動実行する。
+#
+# どちらの経路でも、公開されるのは commute-adjustment/ の中身だけで、
+# サーバー側のコードは含まない。
 #
 # 注意: プライベートリポジトリでも、公開された Pages サイトは
 # インターネット上の誰でも閲覧できる状態になる(アクセス制御は Enterprise プランのみ)。
-# 公開したくない場合は、このワークフローを削除するか、push トリガーを外して
-# workflow_dispatch(手動実行)だけにすること。
+# なお Free プランでは、そもそも private リポジトリで Pages を使えない。
 
 name: Deploy commute-adjustment to Pages
 
+# 経路Bが使える状態になってから手動で実行する。
+# 条件が整っていない間に毎push失敗しないよう、自動トリガーは付けていない。
 on:
-  push:
-    branches: [claude/instagram-integration-yn8trb]
-    paths:
-      - 'commute-adjustment/**'
-      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -57,10 +66,11 @@ jobs:
           echo ""
           echo "2) このプランでは private リポジトリで Pages が使えない"
           echo "   Settings > Pages を開くと表示される。リポジトリを public にするか、"
-          echo "   GitHub Pro 以上にするか、commute-adjustment/ を別のサーバーに置く。"
+          echo "   GitHub Pro 以上にすること。"
           echo ""
-          echo "アプリ自体はこのワークフローとは無関係に動く。commute-adjustment/ の"
-          echo "ファイル一式をどこに置いても、そのまま同じように使える。"
+          echo "設定を触らずに公開したい場合は、経路A(gh-pages ブランチ方式)を使う。"
+          echo "Settings > Pages > Source を 'Deploy from a branch' にして"
+          echo "gh-pages ブランチの / (root) を選ぶだけでよい。"
           exit 1
 
       - name: アプリのフォルダだけをアップロードする
