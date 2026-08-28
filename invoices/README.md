@@ -1,37 +1,30 @@
-# Export Invoices — EXCELLENT AUTO SALES AND LEASING → CARSHOP WORLD IN MIND
+# Invoices — EXCELLENT AUTO SALES AND LEASING → CARSHOP WORLD IN MIND
 
-`EX_INV_TO_CARSHOP81009.xlsx` をひな形として作成した 10 件のインボイスです。
-書式（フォント・罫線・列幅・印刷範囲 `$A$1:$F$39`・`Total = SUM(F24:F38)`）は元ファイルと同一です。
+10 枚それぞれ **完全に別デザイン** のインボイスです。レイアウト・書体・配色・
+表の列構成・付随セクションがすべて異なります。合計欄はすべて数式で、
+金額を書き換えれば自動再計算されます。
 
-| ファイル | Invoice # / P.O. | Date | 車両 | Total |
+| # | ファイル | デザイン | 書体 / 配色 | 特徴 |
 |---|---|---|---|---|
-| EX_INV_TO_CARSHOP81010.xlsx | 81010 | 5/10/2021 | 2018 TOYOTA TACOMA TRD OFF ROAD | $27,850.00 |
-| EX_INV_TO_CARSHOP81011.xlsx | 81011 | 5/14/2021 | 2020 FORD F-150 XLT SUPERCREW | $34,200.00 |
-| EX_INV_TO_CARSHOP81012.xlsx | 81012 | 5/19/2021 | 2017 JEEP WRANGLER UNLIMITED SPORT / 2016 SUBARU OUTBACK 3.6R LIMITED | $40,550.00 |
-| EX_INV_TO_CARSHOP81013.xlsx | 81013 | 5/24/2021 | 2019 RAM 1500 BIG HORN | $31,750.00 |
-| EX_INV_TO_CARSHOP81014.xlsx | 81014 | 5/28/2021 | 2016 CHEVY CORVETTE STINGRAY | $42,900.00 |
-| EX_INV_TO_CARSHOP81015.xlsx | 81015 | 6/2/2021 | 2018 NISSAN FRONTIER SV CREW CAB | $19,450.00 |
-| EX_INV_TO_CARSHOP81016.xlsx | 81016 | 6/8/2021 | 2015 FORD MUSTANG GT PREMIUM | $23,300.00 |
-| EX_INV_TO_CARSHOP81017.xlsx | 81017 | 6/15/2021 | 2019 GMC SIERRA 1500 SLT / 2018 HONDA CR-V EX-L AWD | $51,450.00 |
-| EX_INV_TO_CARSHOP81018.xlsx | 81018 | 6/21/2021 | 2020 TOYOTA 4RUNNER SR5 4WD | $36,800.00 |
-| EX_INV_TO_CARSHOP81019.xlsx | 81019 | 6/28/2021 | 2014 CHEVY CAMARO SS COUPE | $21,200.00 |
+| 1 | ...81010.xlsx | ミニマル | Arial / モノクロ | 罫線を極力使わない余白主体。右上に発行情報 |
+| 2 | ...81011.xlsx | クラシック罫線 | Times New Roman / 白黒 | 全面グリッド、備考欄・署名欄つき |
+| 3 | ...81012.xlsx | ダークヘッダー | Calibri / ネイビー | 帯状ヘッダー、行の縞模様、送金先明記 |
+| 4 | ...81013.xlsx | 左右分割 | Arial / レッド | FROM / BILL TO 並列、赤の情報ストリップ |
+| 5 | ...81014.xlsx | 輸出用 Commercial Invoice | Times New Roman / グリーン | 船名・積地・揚地・FOB→CIF・宣誓文 |
+| 6 | ...81015.xlsx | 費用内訳型 | Calibri / スレート | 車両＋海上運賃・保険・検査等を明細化。銀行情報つき |
+| 7 | ...81016.xlsx | レシート | Courier New / モノクロ | 細幅・等幅フォント・点線区切り |
+| 8 | ...81017.xlsx | レターヘッド | Georgia / ブロンズ | 便箋調、本文＋署名欄 |
+| 9 | ...81018.xlsx | サイドバー | Verdana / ブルー | 左端に色帯、合計を囲みボックスで表示 |
+| 10 | ...81019.xlsx | 取引明細書 | Tahoma / ティール | 複数台一括請求＋支払スケジュール表 |
 
-## 書き換える箇所
+## 共通事項
 
-| セル | 内容 |
-|---|---|
-| `E7` | Date |
-| `F7` | Invoice # |
-| `D22` | P.O. NO. |
-| `A24` / `B24` / `E24` / `F24` | 数量 / 車種 / 単価 / 金額（1台目） |
-| `B25` / `B26` | VIN / 色（1台目） |
-| `A28`–`F30`, `A32`–`F34` | 2台目・3台目（同じ並び） |
-| `F39` | `=SUM(F24:F38)` ＝ 自動計算。触らないこと |
-
-シート名は `INV-<請求番号>`、印刷範囲もそれに合わせてあります。
+- 差出人 (EXCELLENT AUTO SALES AND LEASING) と宛先 (CARSHOP WORLD IN MIND) は
+  元インボイスのまま。
+- 合計は数式（`SUM` 等）。No.6 の値引率 D26、No.10 の支払按分は入力セル。
+- A4 縦 1 ページに収まるよう印刷設定済み。
 
 ## 注意
 
-- 車種・VIN・色・金額はすべて **サンプルデータ** です。実際の車両情報に差し替えてください。
-- 元ファイルの非表示シート `Sheet2` / `Sheet3` に入っていた個人の入出金メモは、
-  取引先に送るファイルなので削除してあります（シート自体は非表示のまま残しています）。
+**車種・VIN・走行距離・金額・船名・B/L 番号などはすべてサンプルデータ**です。
+実際の取引内容に差し替えてご利用ください。
