@@ -105,3 +105,12 @@ TikTokとXのアクセストークンは期限切れが近いとAPI呼び出し�
 - セッションとトークンはデモ用にメモリ上に保持しています。本番ではDBや暗号化Cookieに置き換えてください
 - クライアントシークレット・アクセストークンは絶対にリポジトリやフロントエンドに含めないでください
 - Instagramの長期トークンは約60日で失効します。失効前に `POST /auth/instagram/refresh` で更新してください
+
+---
+
+## 同梱の別アプリ: 通勤調整判定ツール
+
+このリポジトリには、SNS連携アプリとは独立した静的アプリ
+[`commute-adjustment/`](commute-adjustment/) も入っています。
+出張の旅費における通勤調整（支給区間と文言）を判定するPWAで、Node.jsサーバーは不要です。
+詳細は [`commute-adjustment/README.md`](commute-adjustment/README.md) を参照してください。
