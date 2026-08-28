@@ -1,0 +1,53 @@
+# 通勤調整判定ツール(commute-adjustment/)を GitHub Pages に公開する。
+#
+# 初回実行時に configure-pages が Pages 自体を有効化するため、
+# リポジトリの Settings を手で触る必要はない。
+# 公開されるのは commute-adjustment/ の中身だけで、サーバー側のコードは含まない。
+#
+# 注意: プライベートリポジトリでも、公開された Pages サイトは
+# インターネット上の誰でも閲覧できる状態になる(アクセス制御は Enterprise プランのみ)。
+# 公開したくない場合は、このワークフローを削除するか、push トリガーを外して
+# workflow_dispatch(手動実行)だけにすること。
+
+name: Deploy commute-adjustment to Pages
+
+on:
+  push:
+    branches: [claude/instagram-integration-yn8trb]
+    paths:
+      - 'commute-adjustment/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 進行中のデプロイは中断せず、後続をまとめて1回にする
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pages を設定する(未設定なら有効化する)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: アプリのフォルダだけをアップロードする
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: commute-adjustment
+
+      - name: デプロイする
+        id: deployment
+        uses: actions/deploy-pages@v4
