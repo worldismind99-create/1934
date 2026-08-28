@@ -779,7 +779,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="steptitle"><span class="stepnum">1</span>職場・自宅・用務先</div>
     <label class="f">職場（学校）</label>
     <div class="combo">
-      <input type="text" id="schoolText" placeholder="学校名で検索（例: 川島）" autocomplete="off">
+      <input type="text" id="schoolText" placeholder="学校名を入力すると候補が出ます（例: 川島）" autocomplete="off">
       <input type="hidden" id="schoolAddr">
       <div class="combo-list" id="schoolList"></div>
     </div>
@@ -787,10 +787,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <input type="text" id="homeText" placeholder="例: 高松市林町1108-1" autocomplete="off">
     <label class="f">用務先</label>
     <div class="combo">
-      <input type="text" id="destText" placeholder="選択、または直接入力（例: 高松市総合教育センター）" autocomplete="off">
+      <input type="text" id="destText" placeholder="用務先を入力すると候補が出ます（例: ホール）" autocomplete="off">
       <input type="hidden" id="destAddr">
       <div class="combo-list" id="destList"></div>
     </div>
+    <p class="note" style="margin-top:5px;">用務先は292か所を登録しています。数文字入力すると候補が出ます。一覧にないところは、そのまま入力してください。</p>
     <div class="maplinks" id="mapLinks" style="margin-top:12px;"></div>
     <div class="savebar">
       <p class="note" id="saveNote">職場と自宅は、この端末にだけ保存され次回から自動で入ります。</p>
@@ -1159,9 +1160,10 @@ function initCombo(inputId, hiddenId, listId, source, onPick){
       if(el !== list) el.style.display = 'none';
     });
     var f = input.value.trim();
+    if(!f){ close(); return; }   // 打ち込んでから候補を出す
     list.innerHTML = ''; var lastG = null, any = false;
     flat.forEach(function(it){
-      if(f && it.name.indexOf(f) === -1) return;
+      if(it.name.indexOf(f) === -1) return;
       any = true;
       if(it.group !== lastG){
         var gh = document.createElement('div');
