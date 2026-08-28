@@ -51,11 +51,21 @@ Google Apps Script 版（`doGet` + HTML 文字列）を、**GASなしで動く�
 `index.html` をダブルクリックして開くだけでも、判定・Googleマップリンクは動きます。
 （ホーム画面への追加とオフライン動作には、下記のとおり https で公開する必要があります）
 
-### 公開する（GitHub Pages の例）
+### 公開する（GitHub Pages）
+
+このリポジトリには、アプリ一式をルートに置いた **`gh-pages` ブランチ**を用意してあります。
 
 1. GitHub のリポジトリ → **Settings › Pages**
-2. Source を **Deploy from a branch**、ブランチと `/ (root)` を選んで Save
-3. 数分後に `https://<ユーザー名>.github.io/<リポジトリ名>/commute-adjustment/` で開ける
+2. Source を **Deploy from a branch** にする
+3. ブランチに **`gh-pages`**、フォルダに **`/ (root)`** を選んで **Save**
+4. 数分後に `https://<ユーザー名>.github.io/<リポジトリ名>/` で開ける
+
+この方法は GitHub 側がビルドするため、Actions のトークン権限を必要としません。
+アプリを更新したときは、`gh-pages` ブランチにも同じ内容を反映してください。
+
+Actions から公開する経路（`.github/workflows/pages.yml`）も残してありますが、
+そちらは **Settings › Actions › General › Workflow permissions** が
+`Read and write permissions` である必要があります。
 
 社内サーバーや共有フォルダに置く場合も、この4ファイル（＋`icons/`）をそのまま置くだけです。
 
