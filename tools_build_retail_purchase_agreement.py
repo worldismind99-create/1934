@@ -8,7 +8,7 @@ from openpyxl.drawing.xdr import XDRPositiveSize2D
 from openpyxl.worksheet.page import PageMargins
 
 OUT = "/home/user/1934/Retail_Purchase_Agreement_Blank.xlsx"
-EMBLEM = "/home/user/1934/assets/emblem_sample_nissan.png"
+EMBLEM = "/home/user/1934/assets/emblem_sample_ford.png"
 EMU = 9525  # EMU per pixel
 
 wb = openpyxl.Workbook()
@@ -107,8 +107,8 @@ for r, left_lbl, right_lbl in ((6, "Purchaser's Name(s):", "Date:"),
 ws.merge_cells("I3:J9")
 outline("I3:J9")
 img = XLImage(EMBLEM)
-img.width, img.height = 115, 85
-marker = AnchorMarker(col=8, colOff=4 * EMU, row=2, rowOff=22 * EMU)  # col I, row 3
+img.width, img.height = 118, 44
+marker = AnchorMarker(col=8, colOff=2 * EMU, row=5, rowOff=0)  # col I, row 6: centred in I3:J9
 img.anchor = OneCellAnchor(_from=marker,
                            ext=XDRPositiveSize2D(img.width * EMU, img.height * EMU))
 ws.add_image(img)
@@ -360,7 +360,7 @@ g(1, "RETAIL PURCHASE AGREEMENT", "空白フォーム / Blank form - 記入ガ�
 g(3, "入力欄 (Input)", "説明", "記入例 (Example)", bold=True)
 rows = [
     ("B1:F4", "ディーラー名・住所・Tel / Fax", "EXCELLENT AUTO SALES..."),
-    ("I3:J9", "自動車メーカーのエンブレム枠 (画像を差し替え)", "日産エンブレム(サンプル)"),
+    ("I3:J9", "自動車メーカーのエンブレム枠 (画像を差し替え)", "Ford エンブレム"),
     ("L3 / L4", "CUST# / Deal Number", "408132 / 343179"),
     ("D6:H6 / L6", "Purchaser's Name(s) / Date", "JOHN DOE / 08/06/2026"),
     ("D7:H7 / L7", "Address(es) / County", "541 RUBY RIVER DR / MADISON"),
@@ -399,7 +399,7 @@ for note in [
     "・金額欄の書式は $#,##0.00 (USD)。マイナスは ($#,##0.00)、空欄は「-」と表示されます。",
     "・グレー網掛けの行は数式です。上書きすると再計算されません。",
     "・エンブレムは I3:J9 の枠内に画像として配置しています。差し替えは画像を選択して削除し、"
-    "[挿入]→[画像] で同じ枠に貼り直してください。サンプルの日産エンブレムは簡易的な代替図形です。",
+    "[挿入]→[画像] で同じ枠に貼り直してください。",
 ]:
     g(r, "", note, "")
     r += 1
