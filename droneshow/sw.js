@@ -2,7 +2,7 @@
 // アプリ本体とアイコンをキャッシュし、会場で回線が混んでいても開けるようにする。
 // show.json(開始時刻)と ping.txt(時刻合わせ)は常にネットワークへ取りに行く。
 
-var CACHE = 'droneshow-sound-v2';
+var CACHE = 'droneshow-sound-v3';
 var ASSETS = [
   './',
   './index.html',

@@ -97,29 +97,55 @@
   'use strict';
   const $ = id => document.getElementById(id);
   let offset = 0, err = null;
-  const serverNow = () => Date.now() + offset;
+  const serverNow = () => serverNowP();
   const fmt = ms => new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date(ms));
   const pad = n => String(n).padStart(2,'0');
 
-  // --- 時刻合わせ (index.html と同じ方式) ---
+  // --- 時刻合わせ (index.html と同じ2段階方式) ---
+  let offP = null;
+  const serverNowP = () => offP==null ? Date.now() : performance.now() + offP;
+  async function probe(){
+    const a=performance.now();
+    const r=await fetch('ping.txt?r='+Math.random().toString(36).slice(2),{method:'HEAD',cache:'no-store'});
+    const b=performance.now(); const dh=r.headers.get('date'); if(!dh) throw new Error('nodate');
+    return {sec:Date.parse(dh), a, b, mid:(a+b)/2, rtt:b-a};
+  }
+  async function coarseSync(){
+    const found=[]; const deadline=performance.now()+8000;
+    while(performance.now()<deadline && found.length<2){
+      let prev=null; const start=performance.now();
+      while(performance.now()-start<2600){
+        const x=await probe();
+        if(prev && x.sec>prev.sec && x.sec-prev.sec<=1000){ const lo=prev.mid, hi=x.mid; found.push({offP:x.sec-(lo+hi)/2, err:Math.max(3,(hi-lo)/2), rtt:x.rtt}); break; }
+        prev=x; await new Promise(r=>setTimeout(r,12));
+      }
+    }
+    if(!found.length) throw new Error('noedge');
+    found.sort((p,q)=>p.err-q.err); return found[0];
+  }
+  async function refineSync(est, rounds){
+    let best=est;
+    for(let round=0; round<rounds; round++){
+      const spacing=Math.max(5,Math.min(40,Math.round(best.err/2))); const K=4;
+      const nowS=performance.now()+best.offP;
+      const tickSec=Math.ceil((nowS+250+K*spacing+best.rtt)/1000)*1000; const tickP=tickSec-best.offP; const half=best.rtt/2;
+      const shots=[]; for(let k=-K;k<=K;k++){ const sendAt=tickP+k*spacing-half; shots.push(new Promise(res=>setTimeout(async()=>{ try{ res(await probe()); }catch(e){ res(null); } }, Math.max(0, sendAt-performance.now())))); }
+      const rs=(await Promise.all(shots)).filter(Boolean); if(rs.length<3) continue;
+      const minRtt=Math.min(...rs.map(x=>x.rtt)); const ok=rs.filter(x=>x.rtt<=minRtt*2+20);
+      const before=ok.filter(x=>x.sec<tickSec).map(x=>x.mid), after=ok.filter(x=>x.sec>=tickSec).map(x=>x.mid);
+      if(!before.length||!after.length) continue;
+      const lo=Math.max(...before), hi=Math.min(...after); if(hi<=lo) continue;
+      const cand={offP:tickSec-(lo+hi)/2, err:Math.max(2,(hi-lo)/2), rtt:minRtt};
+      if(cand.err<=best.err) best=cand; if(best.err<=6) break;
+    }
+    return best;
+  }
   async function syncClock(){
     $('sync').disabled = true; $('sync').textContent='合わせ中…';
-    const samples=[]; const deadline=performance.now()+9000; let edges=0;
     try{
-      while(performance.now()<deadline && edges<3){
-        let prev=null; const es=performance.now();
-        while(performance.now()-es<2600){
-          const a=performance.now();
-          const r=await fetch('ping.txt?r='+Math.random().toString(36).slice(2),{method:'HEAD',cache:'no-store'});
-          const b=performance.now(); const dh=r.headers.get('date'); if(!dh) throw new Error('nodate');
-          const sec=Date.parse(dh);
-          if(prev && sec>prev.sec && sec-prev.sec<=1000){ const lo=prev.a, hi=b, mid=(lo+hi)/2; samples.push({offset:sec-(Date.now()-(performance.now()-mid)), err:(hi-lo)/2}); edges++; break; }
-          prev={sec,a,b}; await new Promise(r=>setTimeout(r,15));
-        }
-      }
-      if(!samples.length) throw new Error('noedge');
-      samples.sort((x,y)=>x.err-y.err); offset=Math.round(samples[0].offset); err=Math.round(samples[0].err);
-      $('offset').textContent=(offset>=0?'+':'')+offset+' ms'; $('err').textContent='±'+err+' ms'; $('err').className='mono ok';
+      const best = await refineSync(await coarseSync(), 4);
+      offP = best.offP; offset = Math.round(serverNowP() - Date.now()); err = Math.round(best.err);
+      $('offset').textContent=(offset>=0?'+':'')+offset+' ms'; $('err').textContent='±'+err+' ms (往復 '+Math.round(best.rtt)+' ms)'; $('err').className='mono ok';
     }catch(e){ $('err').textContent='届かず(端末時計を使用)'; $('err').className='mono warn'; }
     $('sync').disabled=false; $('sync').textContent='時刻を合わせ直す';
   }
