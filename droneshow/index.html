@@ -3,163 +3,166 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#070B1A">
+<meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ショー音楽">
-<title>ドローンショー サウンド</title>
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="ショー音声">
+<title>ドローンショー 音声同期</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 <style>
-  :root{
-    --bg:#070B1A; --surface:#111731; --surface2:#182043; --line:#26305A;
-    --ink:#EEF1FA; --ink2:#B8BFD9; --muted:#7F88A8;
-    --led:#FFB627; --led-dim:#7A5A1A; --ok:#3DDC97; --warn:#FF7A59; --sky:#5EA8FF;
-    --safe-b: env(safe-area-inset-bottom, 0px);
-  }
+  :root{ --bg:#000; --panel:#121212; --rule:#2E2E2E; --rule2:#1C1C1C; --ink:#F3F3F3; --ink2:#A6A6A6; --ink3:#6B6B6B; --red:#E8412C; --tile:#1A1A1A; }
   *{box-sizing:border-box}
-  html{color-scheme:dark}
+  html{color-scheme:dark;background:#000}
   body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic UI",system-ui,sans-serif;
-    font-size:15px;line-height:1.6;-webkit-text-size-adjust:100%;
-    padding-inline:18px;padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(28px + var(--safe-b));
-    min-height:100vh}
-  .app{max-width:520px;margin:0 auto;display:grid;gap:18px}
-  header{display:grid;gap:4px}
-  .title{font-size:20px;font-weight:700;letter-spacing:.01em;margin:0;text-wrap:balance}
-  .sub{color:var(--ink2);font-size:13px;margin:0}
-  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 10px;border-radius:999px;
-    background:var(--surface2);color:var(--ink2);border:1px solid var(--line);white-space:nowrap}
-  .pill i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
-  .pill.ok i{background:var(--ok);box-shadow:0 0 8px var(--ok)}
-  .pill.warn i{background:var(--warn)}
-  .pill.led i{background:var(--led);box-shadow:0 0 8px var(--led)}
-  .pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","BIZ UDPGothic",system-ui,sans-serif;
+    font-size:15px;line-height:1.55;-webkit-text-size-adjust:100%;
+    padding-inline:16px;padding-block:calc(10px + env(safe-area-inset-top,0px)) calc(24px + env(safe-area-inset-bottom,0px))}
+  .app{max-width:480px;margin:0 auto}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,"Roboto Mono",Consolas,monospace;font-variant-numeric:tabular-nums}
 
-  /* stage */
-  .stage{background:linear-gradient(180deg,#0B1230 0%,#070B1A 100%);border:1px solid var(--line);border-radius:14px;
-    padding:22px 18px 18px;display:grid;gap:8px;text-align:center;position:relative;overflow:hidden}
-  .stage .label{font-size:12px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
-  .stage .big{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    font-variant-numeric:tabular-nums;font-size:clamp(44px,15vw,64px);font-weight:500;line-height:1.05;letter-spacing:.02em}
-  .stage .scene{font-size:22px;font-weight:700;min-height:1.4em}
-  .stage .small{font-size:13px;color:var(--ink2);font-variant-numeric:tabular-nums}
-  .beat{position:absolute;inset:auto 14px 14px auto;width:10px;height:10px;border-radius:50%;background:var(--led-dim);transition:background .08s,box-shadow .08s}
-  .beat.on{background:var(--led);box-shadow:0 0 14px var(--led)}
-  .stars{position:absolute;inset:0;pointer-events:none;opacity:.7}
-  .progress{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:6px}
-  .progress b{display:block;height:100%;width:0;background:var(--led);border-radius:3px;transition:width .25s linear}
+  /* 見出し行 */
+  .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:6px 0 10px;border-bottom:2px solid var(--ink)}
+  .top h1{font-size:17px;font-weight:800;margin:0;letter-spacing:.02em;line-height:1.3}
+  .top .sub{font-size:12px;color:var(--ink2);margin:2px 0 0}
+  .top .clock{font-size:12px;color:var(--ink2);text-align:right;white-space:nowrap}
+  .top .clock b{display:block;font-size:20px;font-weight:600;color:var(--ink);letter-spacing:.04em}
 
-  /* primary button */
-  .cta{appearance:none;border:0;border-radius:14px;background:var(--led);color:#1A1200;font-size:19px;font-weight:700;
-    padding:18px 16px;width:100%;cursor:pointer;letter-spacing:.02em;box-shadow:0 8px 24px rgba(255,182,39,.25)}
-  .cta:disabled{background:var(--surface2);color:var(--muted);box-shadow:none;cursor:default}
-  .cta:focus-visible,button:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
-  .hint{font-size:13px;color:var(--ink2);text-align:center;margin:0}
-  .hint b{color:var(--led);font-weight:600}
+  /* 状態の判子 */
+  .stamps{display:flex;flex-wrap:wrap;gap:8px;padding:12px 0;border-bottom:1px solid var(--rule)}
+  .stamp{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:3px 8px;border:1.5px solid var(--ink3);color:var(--ink3);border-radius:2px;letter-spacing:.02em}
+  .stamp i{width:7px;height:7px;background:currentColor;display:inline-block}
+  .stamp.ok{border-color:var(--ink);color:var(--ink)}
+  .stamp.led{border-color:var(--ink);color:var(--ink)}
+  .stamp.warn{border-color:var(--red);color:var(--red)}
 
-  /* timeline */
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:10px}
-  .card h2{font-size:13px;letter-spacing:.1em;color:var(--muted);margin:0;font-weight:600;text-transform:uppercase}
-  .scenes{list-style:none;margin:0;padding:0;display:grid;gap:4px}
-  .scenes li{display:grid;grid-template-columns:52px 12px 1fr;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;
-    font-variant-numeric:tabular-nums;color:var(--ink2)}
-  .scenes li .t{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--muted)}
-  .scenes li .dot{width:10px;height:10px;border-radius:50%;background:var(--muted)}
-  .scenes li.now{background:var(--surface2);color:var(--ink);font-weight:700}
-  .scenes li.now .dot{box-shadow:0 0 10px currentColor}
-  .scenes li.past{opacity:.5}
+  /* 案内板 */
+  .board{padding:18px 0 14px;border-bottom:1px solid var(--rule)}
+  .board .lbl{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--ink2);margin-bottom:8px}
+  .board .lbl b{color:var(--ink);font-weight:800;font-size:15px;letter-spacing:.06em}
+  .flap{display:flex;gap:6px;align-items:center;justify-content:flex-start}
+  .flap .tile{position:relative;display:inline-grid;place-items:center;width:clamp(44px,13.5vw,60px);height:clamp(64px,19vw,86px);
+    background:var(--tile);color:#fff;border-radius:4px;font-family:"Helvetica Neue",Arial,"Noto Sans JP",sans-serif;font-weight:700;
+    font-size:clamp(44px,13.5vw,60px);line-height:1;font-variant-numeric:tabular-nums;box-shadow:inset 0 0 0 1px #262626}
+  .flap .tile::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:#000}
+  .flap .sep{font-family:"Helvetica Neue",Arial,sans-serif;font-weight:700;font-size:clamp(32px,10vw,44px);color:var(--ink2);padding:0 2px;line-height:1}
+  .board .scene{font-size:20px;font-weight:800;margin:12px 0 0;min-height:1.4em;letter-spacing:.02em}
+  .board .scene .live{display:inline-block;font-size:11px;font-weight:700;color:var(--red);border:1.5px solid var(--red);padding:1px 6px;margin-right:8px;vertical-align:middle;border-radius:2px}
+  .board .small{font-size:12px;color:var(--ink2);margin:6px 0 0}
+  .rail{height:3px;background:var(--rule2);margin-top:12px;position:relative}
+  .rail b{display:block;height:100%;width:0;background:var(--ink);transition:width .25s linear}
+  .beat{display:inline-block;width:8px;height:8px;background:var(--rule);vertical-align:middle;margin-left:8px}
+  .beat.on{background:var(--red)}
 
-  /* details */
-  details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 16px}
-  summary{cursor:pointer;padding:12px 0;font-weight:600;font-size:14px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+  /* 操作 */
+  .cta{appearance:none;border:0;border-radius:0;background:var(--red);color:#fff;font-size:18px;font-weight:800;padding:18px 16px;width:100%;cursor:pointer;letter-spacing:.06em;margin-top:16px}
+  .cta:disabled{background:var(--panel);color:var(--ink2);cursor:default;border:1px solid var(--rule)}
+  .cta:focus-visible,button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .hint{font-size:13px;color:var(--ink2);margin:10px 0 0;line-height:1.7}
+  .hint b{color:var(--ink);font-weight:700}
+
+  /* 香盤表 */
+  .sheet{margin-top:22px}
+  .sheet h2{font-size:12px;font-weight:800;letter-spacing:.14em;color:var(--ink2);margin:0 0 6px;display:flex;justify-content:space-between}
+  .sheet h2 span{font-weight:400;letter-spacing:0}
+  .scenes{list-style:none;margin:0;padding:0;border-top:2px solid var(--ink)}
+  .scenes li{display:grid;grid-template-columns:30px 56px 1fr auto;align-items:center;gap:8px;padding:9px 0 9px 8px;border-bottom:1px solid var(--rule);border-left:3px solid transparent;color:var(--ink)}
+  .scenes li .no,.scenes li .t{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-variant-numeric:tabular-nums;font-size:13px;color:var(--ink2)}
+  .scenes li .nm{font-weight:700}
+  .scenes li .st{font-size:11px;font-weight:700;color:var(--red);padding-right:6px;letter-spacing:.06em}
+  .scenes li.now{border-left-color:var(--red)}
+  .scenes li.past{color:var(--ink3)} .scenes li.past .st{color:var(--ink3)} .scenes li.past .no,.scenes li.past .t{color:var(--ink3)}
+
+  /* 調整 */
+  details{margin-top:22px;border-top:2px solid var(--ink)}
+  summary{cursor:pointer;padding:12px 0;font-weight:800;font-size:13px;letter-spacing:.14em;list-style:none;display:flex;justify-content:space-between;align-items:center;color:var(--ink2)}
   summary::-webkit-details-marker{display:none}
-  summary::after{content:"＋";color:var(--muted)}
-  details[open] summary::after{content:"－"}
-  .rows{display:grid;gap:10px;padding-bottom:16px}
-  .row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;font-size:14px}
+  summary::after{content:"開く";font-weight:400;letter-spacing:0;font-size:12px}
+  details[open] summary::after{content:"閉じる"}
+  .rows{display:grid;padding-bottom:14px}
+  .row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;font-size:14px;padding:9px 0;border-top:1px solid var(--rule)}
   .row .k{color:var(--ink2)}
-  .row .v{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--ink)}
-  .btns{display:flex;gap:8px;flex-wrap:wrap}
-  .btn{appearance:none;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;
-    padding:9px 14px;font-size:14px;cursor:pointer;font-weight:600}
-  .btn.accent{border-color:var(--led);color:var(--led)}
-  .btn:disabled{opacity:.45;cursor:default}
-  input[type=range]{width:100%;accent-color:var(--led)}
-  .note{font-size:13px;color:var(--muted);margin:0}
-  .warnbox{border-left:3px solid var(--warn);background:rgba(255,122,89,.1);padding:8px 12px;border-radius:0 8px 8px 0;font-size:13px;color:var(--ink2)}
-  .toast{position:fixed;left:50%;bottom:calc(20px + var(--safe-b));transform:translateX(-50%) translateY(20px);opacity:0;
-    background:var(--surface2);border:1px solid var(--line);color:var(--ink);padding:10px 16px;border-radius:10px;font-size:14px;
-    transition:all .25s;pointer-events:none;max-width:90vw;text-align:center}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  ul.tips{margin:0;padding-left:18px;font-size:13px;color:var(--ink2);display:grid;gap:4px}
-  @media (prefers-reduced-motion: reduce){ .beat,.progress b{transition:none} }
+  .row .v{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;padding:8px 0 10px}
+  .btn{appearance:none;border:1.5px solid var(--ink);background:transparent;color:var(--ink);border-radius:2px;padding:8px 12px;font-size:13px;cursor:pointer;font-weight:700}
+  .btn:disabled{opacity:.4;cursor:default}
+  input[type=range]{width:100%;accent-color:#fff;margin:2px 0 10px}
+  .note{font-size:12px;color:var(--ink2);margin:0 0 8px;line-height:1.7}
+  .warnbox{border:1.5px solid var(--red);padding:8px 10px;font-size:12px;color:var(--ink2);margin:6px 0 10px;line-height:1.7}
+  .warnbox b{color:var(--red)}
+  .toast{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(12px);opacity:0;background:#fff;color:#000;padding:10px 14px;font-size:14px;font-weight:700;transition:all .2s;pointer-events:none;text-align:center}
+  .toast.show{opacity:1;transform:none}
+  .guide{margin-top:22px;border-top:2px solid var(--ink);padding-top:10px}
+  .guide h2{font-size:12px;font-weight:800;letter-spacing:.14em;color:var(--ink2);margin:0 0 6px}
+  .guide ol{margin:0;padding-left:20px;font-size:13px;color:var(--ink2);line-height:1.8}
+  .guide ol li::marker{color:var(--ink);font-weight:700}
+  .foot{margin-top:22px;font-size:11px;color:var(--ink3);line-height:1.7}
+  @media (prefers-reduced-motion: reduce){ .rail b,.toast{transition:none} }
 </style>
 </head>
 <body>
 <div class="app">
-  <header>
-    <h1 class="title" id="title">ドローンショー サウンド</h1>
-    <p class="sub" id="subtitle">開始時刻を読み込み中…</p>
-    <div class="pills">
-      <span class="pill" id="pillSync"><i></i><span>時刻 未同期</span></span>
-      <span class="pill" id="pillAudio"><i></i><span>音源 未準備</span></span>
-      <span class="pill" id="pillWake"><i></i><span>画面 通常</span></span>
-    </div>
-  </header>
+  <div class="top">
+    <div><h1 id="title">ドローンショー 音声同期</h1><p class="sub" id="subtitle">開演時刻を読み込み中</p></div>
+    <div class="clock">会場時刻<b class="mono" id="clockNow">--:--:--</b></div>
+  </div>
 
-  <section class="stage" aria-live="polite">
-    <canvas class="stars" id="stars" aria-hidden="true"></canvas>
-    <div class="label" id="stageLabel">開演まで</div>
-    <div class="big" id="big">--:--</div>
-    <div class="scene" id="sceneName"></div>
-    <div class="small" id="stageSmall">開演 <span id="t0Text">--:--:--</span> (日本時間)</div>
-    <div class="progress" aria-hidden="true"><b id="bar"></b></div>
-    <span class="beat" id="beat" aria-hidden="true"></span>
+  <div class="stamps">
+    <span class="stamp" id="pillSync"><i></i><span>時刻 未同期</span></span>
+    <span class="stamp" id="pillAudio"><i></i><span>音源 未準備</span></span>
+    <span class="stamp" id="pillWake"><i></i><span>画面 通常</span></span>
+  </div>
+
+  <section class="board" aria-live="polite">
+    <div class="lbl"><span><b id="stageLabel">開演まで</b><span class="beat" id="beat" aria-hidden="true"></span></span><span>開演 <span class="mono" id="t0Text">--:--:--</span></span></div>
+    <div class="flap mono" id="big"><span class="tile">-</span><span class="tile">-</span><span class="sep">:</span><span class="tile">-</span><span class="tile">-</span></div>
+    <p class="scene" id="sceneName"></p>
+    <p class="small" id="stageSmall"></p>
+    <div class="rail" aria-hidden="true"><b id="bar"></b></div>
   </section>
 
-  <button class="cta" id="cta">準備OK ― 音を出す</button>
-  <p class="hint" id="hint">ボタンを押すと、時刻合わせと音源の準備をします。<b>マナーモードを解除</b>し、<b>画面をつけたまま</b>お待ちください。</p>
+  <button class="cta" id="cta">準備OK</button>
+  <p class="hint" id="hint">押すと時刻合わせと音源の準備をします。<b>マナーモードを解除</b>し、<b>画面をつけたまま</b>お待ちください。</p>
 
-  <section class="card">
-    <h2>シーン</h2>
+  <section class="sheet">
+    <h2>香盤 <span>時間は開演からの経過</span></h2>
     <ul class="scenes" id="scenes"></ul>
   </section>
 
   <details id="tune">
-    <summary>同期の状態・微調整</summary>
+    <summary>同期の状態と微調整</summary>
     <div class="rows">
-      <div class="row"><span class="k">端末時計とサーバーのズレ</span><span class="v" id="offsetText">-- ms</span></div>
+      <div class="row"><span class="k">端末時計とサーバーの差</span><span class="v" id="offsetText">-- ms</span></div>
       <div class="row"><span class="k">同期の誤差(推定)</span><span class="v" id="errText">-- ms</span></div>
       <div class="row"><span class="k">端末の音声出力遅延</span><span class="v" id="latText">-- ms</span></div>
-      <div class="row"><span class="k">手動補正(＋で音を遅らせる)</span><span class="v" id="trimText">0 ms</span></div>
+      <div class="row"><span class="k">手動補正(＋で音が遅れる)</span><span class="v" id="trimText">0 ms</span></div>
       <div class="btns">
         <button class="btn" id="trimMinus" type="button">－10 ms</button>
         <button class="btn" id="trimPlus" type="button">＋10 ms</button>
         <button class="btn" id="trimReset" type="button">0に戻す</button>
         <button class="btn" id="resync" type="button">時刻を合わせ直す</button>
       </div>
-      <p class="note">隣の人と音がずれて聞こえるときは、両方のスマホで「時刻を合わせ直す」を押してください。それでも合わないときだけ手動補正を使います。</p>
+      <p class="note">隣の人と音がずれるときは、両方の端末で「時刻を合わせ直す」を押してください。それでも合わないときだけ手動補正を使います。</p>
       <div class="row"><span class="k">音量</span><span class="v" id="volText">100%</span></div>
       <input type="range" id="vol" min="0" max="100" value="100" aria-label="音量">
-      <div class="row"><span class="k">開演前カウントダウン音(3・2・1)</span>
-        <label><input type="checkbox" id="preroll" checked> 鳴らす</label></div>
-      <div class="warnbox" id="btWarn">Bluetoothイヤホンは機種により100〜250msほど遅れます。有線イヤホンかスマホのスピーカーを推奨します。Bluetoothを使う場合は手動補正を「－150 ms」前後から試してください。</div>
+      <div class="row"><span class="k">開演前のカウント音(3・2・1)</span><label><input type="checkbox" id="preroll" checked> 鳴らす</label></div>
+      <div class="warnbox" id="btWarn"><b>Bluetoothイヤホン</b>は機種により100〜250ms遅れます。有線イヤホンか本体スピーカーを推奨します。使う場合は手動補正を－150ms前後から試してください。</div>
       <div class="row"><span class="k">同期方法</span><span class="v" id="methodText">--</span></div>
       <div class="row"><span class="k">設定の取得元</span><span class="v" id="srcText">show.json</span></div>
     </div>
   </details>
 
-  <section class="card">
-    <h2>使い方</h2>
-    <ul class="tips">
-      <li>会場に着いたら開いて「準備OK」を押す(音源は事前に端末へ入ります)。</li>
-      <li>開演時刻になると自動で音楽が始まります。ボタン操作は不要です。</li>
-      <li>画面を消したり他のアプリに切り替えると音が止まります。戻れば位置を合わせて再開します。</li>
-      <li>開演が遅れた場合、新しい開始時刻を自動で受け取ります。</li>
-    </ul>
+  <section class="guide">
+    <h2>ご利用の流れ</h2>
+    <ol>
+      <li>会場に着いたら「準備OK」を押す。音源はこのとき端末に入ります。</li>
+      <li>開演時刻になると自動で音楽が始まります。操作はいりません。</li>
+      <li>画面を消したり他のアプリに切り替えると音が止まります。戻れば続きから合わせて再開します。</li>
+      <li>開演が遅れた場合は、新しい開演時刻を自動で受け取ります。</li>
+    </ol>
   </section>
+  <p class="foot">音は端末の中で鳴るため、会場のどこにいてもスピーカーからの距離による遅れはありません。</p>
 </div>
 <div class="toast" id="toast" role="status"></div>
 <audio id="unmute" loop playsinline preload="auto" aria-hidden="true"
@@ -190,7 +193,8 @@
   const pad = n => String(n).padStart(2,'0');
   const mmss = sec => { sec=Math.max(0,Math.floor(sec)); return pad(Math.floor(sec/60))+':'+pad(sec%60); };
   let toastTimer; const toast = msg => { const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800); };
-  const setPill = (id, cls, text) => { const p=$(id); p.className='pill '+cls; p.querySelector('span').textContent=text; };
+  const setPill = (id, cls, text) => { const p=$(id); p.className='stamp '+cls; p.querySelector('span').textContent=text; };
+  let lastBig=''; const setBig = str => { if(str===lastBig) return; lastBig=str; const el=$('big'); el.innerHTML=''; for(const ch of str){ const s=document.createElement('span'); s.className = /\d/.test(ch)?'tile':'sep'; s.textContent=ch; el.appendChild(s);} };
 
   // ---------- 設定 (show.json / URLパラメータ) ----------
   async function loadConfig(silent){
@@ -220,9 +224,10 @@
     const ul = $('scenes'); ul.innerHTML='';
     (S.config.scenes||[]).forEach((sc,i)=>{
       const li=document.createElement('li'); li.dataset.i=i;
-      li.innerHTML = '<span class="t">'+mmss(sc.t)+'</span><span class="dot" style="background:'+(sc.color||'#7F88A8')+';color:'+(sc.color||'#7F88A8')+'"></span><span>'+escapeHtml(sc.name||'')+'</span>';
+      li.innerHTML = '<span class="no">'+pad(i+1)+'</span><span class="t">'+mmss(sc.t)+'</span><span class="nm">'+escapeHtml(sc.name||'')+'</span><span class="st"></span>';
       ul.appendChild(li);
     });
+    S.lastSceneIdx = -2;
   }
   const escapeHtml = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -286,9 +291,9 @@
       S.gain.gain.value = Number($('vol').value)/100;
       S.ctx.onstatechange = () => { if(S.ctx.state==='running' && (S.state==='ready'||S.state==='playing')) arm(); };
     }
-    if(S.ctx.state !== 'running') await S.ctx.resume();
-    // iOS: 無音の <audio> を再生して音声セッションを「再生」扱いにし、マナーモードでも Web Audio が鳴るようにする
-    try{ const u=$('unmute'); u.volume=0.01; await u.play(); }catch(e){}
+    if(S.ctx.state !== 'running') await Promise.race([S.ctx.resume(), new Promise(r=>setTimeout(r,2000))]);
+    // iOS: 無音の <audio> を再生して音声セッションを「再生」扱いにし、マナーモードでも Web Audio が鳴るようにする(完了は待たない)
+    try{ const u=$('unmute'); u.volume=0.01; const p=u.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){}
     // 無音バッファを1回鳴らしてロック解除
     const b = S.ctx.createBuffer(1, 1, S.ctx.sampleRate); const s = S.ctx.createBufferSource(); s.buffer=b; s.connect(S.ctx.destination); s.start();
   }
@@ -337,13 +342,13 @@
         const bg=oc.createGain(); bg.gain.setValueAtTime(0.18/(k+1), start); bg.gain.exponentialRampToValueAtTime(0.0005, start+1.6); o.connect(bg); bg.connect(master); o.start(start); o.stop(start+1.7); }); }
     });
     // キック・ハイハット・ベース
+    const nb = oc.createBuffer(1, Math.floor(sr*0.05), sr); { const d=nb.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2); }
     for(let t=0; t<dur; t+=beat){
       const k = oc.createOscillator(); const kg = oc.createGain();
       k.frequency.setValueAtTime(150, t); k.frequency.exponentialRampToValueAtTime(45, t+0.12);
       kg.gain.setValueAtTime(0.9, t); kg.gain.exponentialRampToValueAtTime(0.001, t+0.22);
       k.connect(kg); kg.connect(master); k.start(t); k.stop(t+0.25);
-      const hh = oc.createBufferSource(); const nb = oc.createBuffer(1, Math.floor(sr*0.05), sr); const d=nb.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
-      hh.buffer = nb; const hg = oc.createGain(); hg.gain.value = 0.12; const hp = oc.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=6000;
+      const hh = oc.createBufferSource(); hh.buffer = nb; const hg = oc.createGain(); hg.gain.value = 0.12; const hp = oc.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=6000;
       hh.connect(hp); hp.connect(hg); hg.connect(master); hh.start(t+beat/2);
       const sceneIdx = Math.max(0, scenes.findIndex((s,i)=> t>=s.t && (!scenes[i+1] || t<scenes[i+1].t)));
       const root = chords[sceneIdx % chords.length][0];
@@ -387,31 +392,32 @@
   // ---------- 画面 ----------
   function tick(){
     const now = serverNow();
-    const big=$('big'), label=$('stageLabel'), scene=$('sceneName'), small=$('stageSmall'), bar=$('bar');
-    if(!S.t0){ label.textContent='開演時刻'; big.textContent='未定'; scene.textContent=''; }
+    const label=$('stageLabel'), scene=$('sceneName'), bar=$('bar');
+    if(!S.t0){ label.textContent='開演時刻'; setBig('--:--'); scene.textContent=''; }
     else{
       const dt = (now - S.t0)/1000;
       const dur = S.buffer ? S.buffer.duration : (Number(S.config.duration)||0);
       if(dt < 0){
-        label.textContent = '開演まで'; big.textContent = mmss(-dt); scene.textContent = S.state==='ready' ? '準備完了。このままお待ちください' : '';
+        label.textContent = '開演まで'; setBig(mmss(-dt)); scene.textContent = S.state==='ready' ? '準備できています' : '';
         bar.style.width='0%';
       }else if(dur && dt < dur){
-        label.textContent = '上演中'; big.textContent = mmss(dt);
-        const sc = currentScene(dt); scene.textContent = sc ? sc.name : '';
+        label.textContent = '上演中'; setBig(mmss(dt));
+        const sc = currentScene(dt); scene.innerHTML = '<span class="live">上演中</span>' + escapeHtml(sc ? sc.name : '');
         bar.style.width = (dt/dur*100).toFixed(2)+'%';
         if(S.state==='ready'){ S.state='playing'; }
         if(S.state==='playing' && $('cta').textContent!=='再生中') $('cta').textContent='再生中';
       }else{
-        label.textContent = '終演'; big.textContent = mmss(dur||dt); scene.textContent='ご来場ありがとうございました'; bar.style.width='100%';
+        label.textContent = '終演'; setBig(mmss(dur||dt)); scene.textContent='本日はご来場ありがとうございました'; bar.style.width='100%';
         if(S.state==='playing'){ S.state='done'; $('cta').textContent='終演'; }
       }
       // シーン一覧のハイライト
       const idx = dt<0 ? -1 : sceneIndex(dt);
-      if(idx !== S.lastSceneIdx){ S.lastSceneIdx = idx; document.querySelectorAll('#scenes li').forEach((li,i)=>{ li.classList.toggle('now', i===idx); li.classList.toggle('past', i<idx); }); }
+      if(idx !== S.lastSceneIdx){ S.lastSceneIdx = idx; document.querySelectorAll('#scenes li').forEach((li,i)=>{ li.classList.toggle('now', i===idx); li.classList.toggle('past', i<idx); li.querySelector('.st').textContent = i===idx ? '上演中' : (i<idx ? '済' : ''); }); }
       // ビート表示(100BPM=0.6s)
       if(dt>=0 && dur && dt<dur){ const ph = (dt % 0.6); $('beat').classList.toggle('on', ph < 0.1); } else $('beat').classList.remove('on');
     }
-    small.innerHTML = '開演 <span id="t0Text">'+(S.t0?fmtJST(S.t0):'未定')+'</span> ・ 現在 '+fmtJST(now)+' (日本時間)';
+    $('clockNow').textContent = fmtJST(now);
+    if(S.t0 && $('t0Text').textContent !== fmtJST(S.t0)) $('t0Text').textContent = fmtJST(S.t0);
     requestAnimationFrame(tick);
   }
   function sceneIndex(dt){ const sc=S.config.scenes||[]; let idx=-1; for(let i=0;i<sc.length;i++){ if(dt>=sc[i].t) idx=i; } return idx; }
@@ -437,15 +443,15 @@
     try{
       await ensureContext();
       keepAwake();
-      const tasks = [ loadAudio(), syncClock().catch(e=>{ S.err=null; S.method='端末時計(サーバーに届かず)'; updateSyncUI(); }) ];
-      await Promise.all(tasks);
+      await syncClock().catch(e=>{ S.err=null; S.method='端末時計(サーバーに届かず: '+(e.message||e)+')'; updateSyncUI(); });
+      await loadAudio();
       await loadConfig(true);
       arm();
-      btn.textContent = S.state==='playing' ? '再生中' : '準備完了 ― 開演を待っています';
-      $('hint').innerHTML = 'このまま<b>画面をつけたまま</b>お待ちください。開演時刻に自動で始まります。';
+      btn.textContent = S.state==='playing' ? '再生中' : '準備完了 ― 開演待ち';
+      $('hint').textContent = '画面をつけたままお待ちください。開演と同時に自動で始まります。';
       if(!S.pollTimer) S.pollTimer = setInterval(()=>loadConfig(true), 20000);
     }catch(e){
-      console.error(e); btn.disabled=false; btn.textContent='準備OK ― 音を出す(もう一度)'; toast('準備に失敗しました: '+(e.message||e)); S.state='idle';
+      console.error(e); btn.disabled=false; btn.textContent='もう一度 準備する'; toast('準備に失敗しました: '+(e.message||e)); S.state='idle';
     }
   });
   $('resync').addEventListener('click', async ()=>{ $('resync').disabled=true; try{ await syncClock(); toast('時刻を合わせ直しました'); if(S.state==='ready'||S.state==='playing') arm(); }catch(e){ toast('サーバーに届きませんでした'); } $('resync').disabled=false; });
@@ -456,15 +462,6 @@
   $('vol').addEventListener('input', e=>{ const v=Number(e.target.value); $('volText').textContent=v+'%'; if(S.gain) S.gain.gain.value=v/100; });
   $('preroll').addEventListener('change', ()=>{ if(S.state==='ready') arm(); });
   setTrim(S.trim);
-
-  // ---------- 星空(装飾) ----------
-  (function stars(){
-    const cv=$('stars'); const st=cv.parentElement; const dpr=Math.min(2,window.devicePixelRatio||1);
-    function draw(){ cv.width=st.clientWidth*dpr; cv.height=st.clientHeight*dpr; const g=cv.getContext('2d'); g.clearRect(0,0,cv.width,cv.height);
-      let seed=7; const rnd=()=>{ seed=(seed*16807)%2147483647; return seed/2147483647; };
-      for(let i=0;i<70;i++){ const x=rnd()*cv.width,y=rnd()*cv.height,r=rnd()*1.4*dpr+0.3; g.fillStyle='rgba(238,241,250,'+(0.15+rnd()*0.5)+')'; g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fill(); } }
-    draw(); window.addEventListener('resize', draw);
-  })();
 
   // ---------- 起動 ----------
   loadConfig(false).then(()=>{ updateSyncUI(); requestAnimationFrame(tick); if(params.get('autostart')) $('cta').click(); });
