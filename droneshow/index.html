@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070B1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ショー音楽">
+<title>ドローンショー サウンド</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+  :root{
+    --bg:#070B1A; --surface:#111731; --surface2:#182043; --line:#26305A;
+    --ink:#EEF1FA; --ink2:#B8BFD9; --muted:#7F88A8;
+    --led:#FFB627; --led-dim:#7A5A1A; --ok:#3DDC97; --warn:#FF7A59; --sky:#5EA8FF;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:border-box}
+  html{color-scheme:dark}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic UI",system-ui,sans-serif;
+    font-size:15px;line-height:1.6;-webkit-text-size-adjust:100%;
+    padding-inline:18px;padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(28px + var(--safe-b));
+    min-height:100vh}
+  .app{max-width:520px;margin:0 auto;display:grid;gap:18px}
+  header{display:grid;gap:4px}
+  .title{font-size:20px;font-weight:700;letter-spacing:.01em;margin:0;text-wrap:balance}
+  .sub{color:var(--ink2);font-size:13px;margin:0}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 10px;border-radius:999px;
+    background:var(--surface2);color:var(--ink2);border:1px solid var(--line);white-space:nowrap}
+  .pill i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+  .pill.ok i{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+  .pill.warn i{background:var(--warn)}
+  .pill.led i{background:var(--led);box-shadow:0 0 8px var(--led)}
+  .pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+
+  /* stage */
+  .stage{background:linear-gradient(180deg,#0B1230 0%,#070B1A 100%);border:1px solid var(--line);border-radius:14px;
+    padding:22px 18px 18px;display:grid;gap:8px;text-align:center;position:relative;overflow:hidden}
+  .stage .label{font-size:12px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+  .stage .big{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-variant-numeric:tabular-nums;font-size:clamp(44px,15vw,64px);font-weight:500;line-height:1.05;letter-spacing:.02em}
+  .stage .scene{font-size:22px;font-weight:700;min-height:1.4em}
+  .stage .small{font-size:13px;color:var(--ink2);font-variant-numeric:tabular-nums}
+  .beat{position:absolute;inset:auto 14px 14px auto;width:10px;height:10px;border-radius:50%;background:var(--led-dim);transition:background .08s,box-shadow .08s}
+  .beat.on{background:var(--led);box-shadow:0 0 14px var(--led)}
+  .stars{position:absolute;inset:0;pointer-events:none;opacity:.7}
+  .progress{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:6px}
+  .progress b{display:block;height:100%;width:0;background:var(--led);border-radius:3px;transition:width .25s linear}
+
+  /* primary button */
+  .cta{appearance:none;border:0;border-radius:14px;background:var(--led);color:#1A1200;font-size:19px;font-weight:700;
+    padding:18px 16px;width:100%;cursor:pointer;letter-spacing:.02em;box-shadow:0 8px 24px rgba(255,182,39,.25)}
+  .cta:disabled{background:var(--surface2);color:var(--muted);box-shadow:none;cursor:default}
+  .cta:focus-visible,button:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+  .hint{font-size:13px;color:var(--ink2);text-align:center;margin:0}
+  .hint b{color:var(--led);font-weight:600}
+
+  /* timeline */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:10px}
+  .card h2{font-size:13px;letter-spacing:.1em;color:var(--muted);margin:0;font-weight:600;text-transform:uppercase}
+  .scenes{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+  .scenes li{display:grid;grid-template-columns:52px 12px 1fr;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;
+    font-variant-numeric:tabular-nums;color:var(--ink2)}
+  .scenes li .t{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--muted)}
+  .scenes li .dot{width:10px;height:10px;border-radius:50%;background:var(--muted)}
+  .scenes li.now{background:var(--surface2);color:var(--ink);font-weight:700}
+  .scenes li.now .dot{box-shadow:0 0 10px currentColor}
+  .scenes li.past{opacity:.5}
+
+  /* details */
+  details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 16px}
+  summary{cursor:pointer;padding:12px 0;font-weight:600;font-size:14px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"＋";color:var(--muted)}
+  details[open] summary::after{content:"－"}
+  .rows{display:grid;gap:10px;padding-bottom:16px}
+  .row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;font-size:14px}
+  .row .k{color:var(--ink2)}
+  .row .v{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .btns{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{appearance:none;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;
+    padding:9px 14px;font-size:14px;cursor:pointer;font-weight:600}
+  .btn.accent{border-color:var(--led);color:var(--led)}
+  .btn:disabled{opacity:.45;cursor:default}
+  input[type=range]{width:100%;accent-color:var(--led)}
+  .note{font-size:13px;color:var(--muted);margin:0}
+  .warnbox{border-left:3px solid var(--warn);background:rgba(255,122,89,.1);padding:8px 12px;border-radius:0 8px 8px 0;font-size:13px;color:var(--ink2)}
+  .toast{position:fixed;left:50%;bottom:calc(20px + var(--safe-b));transform:translateX(-50%) translateY(20px);opacity:0;
+    background:var(--surface2);border:1px solid var(--line);color:var(--ink);padding:10px 16px;border-radius:10px;font-size:14px;
+    transition:all .25s;pointer-events:none;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  ul.tips{margin:0;padding-left:18px;font-size:13px;color:var(--ink2);display:grid;gap:4px}
+  @media (prefers-reduced-motion: reduce){ .beat,.progress b{transition:none} }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1 class="title" id="title">ドローンショー サウンド</h1>
+    <p class="sub" id="subtitle">開始時刻を読み込み中…</p>
+    <div class="pills">
+      <span class="pill" id="pillSync"><i></i><span>時刻 未同期</span></span>
+      <span class="pill" id="pillAudio"><i></i><span>音源 未準備</span></span>
+      <span class="pill" id="pillWake"><i></i><span>画面 通常</span></span>
+    </div>
+  </header>
+
+  <section class="stage" aria-live="polite">
+    <canvas class="stars" id="stars" aria-hidden="true"></canvas>
+    <div class="label" id="stageLabel">開演まで</div>
+    <div class="big" id="big">--:--</div>
+    <div class="scene" id="sceneName"></div>
+    <div class="small" id="stageSmall">開演 <span id="t0Text">--:--:--</span> (日本時間)</div>
+    <div class="progress" aria-hidden="true"><b id="bar"></b></div>
+    <span class="beat" id="beat" aria-hidden="true"></span>
+  </section>
+
+  <button class="cta" id="cta">準備OK ― 音を出す</button>
+  <p class="hint" id="hint">ボタンを押すと、時刻合わせと音源の準備をします。<b>マナーモードを解除</b>し、<b>画面をつけたまま</b>お待ちください。</p>
+
+  <section class="card">
+    <h2>シーン</h2>
+    <ul class="scenes" id="scenes"></ul>
+  </section>
+
+  <details id="tune">
+    <summary>同期の状態・微調整</summary>
+    <div class="rows">
+      <div class="row"><span class="k">端末時計とサーバーのズレ</span><span class="v" id="offsetText">-- ms</span></div>
+      <div class="row"><span class="k">同期の誤差(推定)</span><span class="v" id="errText">-- ms</span></div>
+      <div class="row"><span class="k">端末の音声出力遅延</span><span class="v" id="latText">-- ms</span></div>
+      <div class="row"><span class="k">手動補正(＋で音を遅らせる)</span><span class="v" id="trimText">0 ms</span></div>
+      <div class="btns">
+        <button class="btn" id="trimMinus" type="button">－10 ms</button>
+        <button class="btn" id="trimPlus" type="button">＋10 ms</button>
+        <button class="btn" id="trimReset" type="button">0に戻す</button>
+        <button class="btn" id="resync" type="button">時刻を合わせ直す</button>
+      </div>
+      <p class="note">隣の人と音がずれて聞こえるときは、両方のスマホで「時刻を合わせ直す」を押してください。それでも合わないときだけ手動補正を使います。</p>
+      <div class="row"><span class="k">音量</span><span class="v" id="volText">100%</span></div>
+      <input type="range" id="vol" min="0" max="100" value="100" aria-label="音量">
+      <div class="row"><span class="k">開演前カウントダウン音(3・2・1)</span>
+        <label><input type="checkbox" id="preroll" checked> 鳴らす</label></div>
+      <div class="warnbox" id="btWarn">Bluetoothイヤホンは機種により100〜250msほど遅れます。有線イヤホンかスマホのスピーカーを推奨します。Bluetoothを使う場合は手動補正を「－150 ms」前後から試してください。</div>
+      <div class="row"><span class="k">同期方法</span><span class="v" id="methodText">--</span></div>
+      <div class="row"><span class="k">設定の取得元</span><span class="v" id="srcText">show.json</span></div>
+    </div>
+  </details>
+
+  <section class="card">
+    <h2>使い方</h2>
+    <ul class="tips">
+      <li>会場に着いたら開いて「準備OK」を押す(音源は事前に端末へ入ります)。</li>
+      <li>開演時刻になると自動で音楽が始まります。ボタン操作は不要です。</li>
+      <li>画面を消したり他のアプリに切り替えると音が止まります。戻れば位置を合わせて再開します。</li>
+      <li>開演が遅れた場合、新しい開始時刻を自動で受け取ります。</li>
+    </ul>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<audio id="unmute" loop playsinline preload="auto" aria-hidden="true"
+  src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA="></audio>
+
+<script>
+(function(){
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+
+  // ---------- 状態 ----------
+  const S = {
+    config: null,            // show.json の内容
+    t0: null,                // 開演時刻 (サーバー時刻ms)
+    offset: 0,               // サーバー時刻 - 端末時刻 (ms)
+    err: null,               // 同期誤差(ms, 推定)
+    method: '未同期',
+    trim: Number(localStorage.getItem('ds.trim') || 0),
+    ctx: null, gain: null, buffer: null, source: null, prerollSources: [],
+    state: 'idle',           // idle | preparing | ready | playing | done
+    wake: null,
+    lastSceneIdx: -1,
+    pollTimer: null
+  };
+  const serverNow = () => Date.now() + S.offset;
+  const fmtJST = ms => new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date(ms));
+  const pad = n => String(n).padStart(2,'0');
+  const mmss = sec => { sec=Math.max(0,Math.floor(sec)); return pad(Math.floor(sec/60))+':'+pad(sec%60); };
+  let toastTimer; const toast = msg => { const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800); };
+  const setPill = (id, cls, text) => { const p=$(id); p.className='pill '+cls; p.querySelector('span').textContent=text; };
+
+  // ---------- 設定 (show.json / URLパラメータ) ----------
+  async function loadConfig(silent){
+    let cfg = null, src = 'show.json';
+    const showUrl = params.get('show') || 'show.json';
+    try{
+      const r = await fetch(showUrl + (showUrl.includes('?')?'&':'?') + 'v=' + Date.now(), {cache:'no-store'});
+      if(!r.ok) throw new Error(r.status);
+      cfg = await r.json();
+    }catch(e){
+      if(!S.config){ cfg = { title:'ドローンショー サウンド', subtitle:'設定を読み込めませんでした', t0:null, duration:120, scenes:[] }; src='(取得失敗)'; }
+      else return; // 既存設定を維持
+    }
+    if(params.get('t0')){ cfg.t0 = params.get('t0'); src = 'URL'; }
+    if(params.get('demo')){ cfg.audio = ''; }
+    const newT0 = cfg.t0 ? Date.parse(cfg.t0) : null;
+    const changed = S.config && S.t0 !== newT0;
+    S.config = cfg; S.t0 = (newT0 && !isNaN(newT0)) ? newT0 : null;
+    $('title').textContent = cfg.title || 'ドローンショー サウンド';
+    $('subtitle').textContent = cfg.subtitle || '';
+    $('srcText').textContent = src;
+    $('t0Text').textContent = S.t0 ? fmtJST(S.t0) : '未定';
+    renderScenes();
+    if(changed){ toast('開始時刻が更新されました: ' + fmtJST(S.t0)); if(S.state==='ready'||S.state==='playing'||S.state==='done'){ S.state='ready'; arm(); } }
+  }
+  function renderScenes(){
+    const ul = $('scenes'); ul.innerHTML='';
+    (S.config.scenes||[]).forEach((sc,i)=>{
+      const li=document.createElement('li'); li.dataset.i=i;
+      li.innerHTML = '<span class="t">'+mmss(sc.t)+'</span><span class="dot" style="background:'+(sc.color||'#7F88A8')+';color:'+(sc.color||'#7F88A8')+'"></span><span>'+escapeHtml(sc.name||'')+'</span>';
+      ul.appendChild(li);
+    });
+  }
+  const escapeHtml = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  // ---------- 時刻合わせ ----------
+  // 静的ホスティングには時刻APIがないので、HTTPの Date ヘッダ(秒精度)が「次の秒に切り替わる瞬間」を
+  // 短い間隔の HEAD リクエストで捉え、サーバー時刻と端末時計の差を推定する。誤差は概ね ±(往復時間+間隔)/2。
+  async function syncClock(){
+    setPill('pillSync','', '時刻 合わせ中…');
+    const samples = [];
+    const url = 'ping.txt';
+    let deadline = performance.now() + 9000;
+    let edges = 0;
+    while(performance.now() < deadline && edges < 3){
+      let prev = null;
+      const edgeStart = performance.now();
+      while(performance.now() - edgeStart < 2600){
+        const a = performance.now();
+        let r;
+        try{ r = await fetch(url + '?r=' + Math.random().toString(36).slice(2), {method:'HEAD', cache:'no-store'}); }
+        catch(e){ throw new Error('offline'); }
+        const b = performance.now();
+        const dh = r.headers.get('date');
+        if(!dh) throw new Error('nodate');
+        const sec = Date.parse(dh);
+        if(prev && sec > prev.sec && sec - prev.sec <= 1000){
+          // 秒の切替は prev の送信(a) と今回の受信(b) の間で起きた
+          const lo = prev.a, hi = b;
+          const mid = (lo + hi) / 2;
+          const localAtMid = Date.now() - (performance.now() - mid);
+          samples.push({ offset: sec - localAtMid, err: (hi - lo) / 2, rtt: b - a });
+          edges++;
+          break;
+        }
+        prev = { sec, a, b };
+        await new Promise(res => setTimeout(res, 15));
+      }
+    }
+    if(!samples.length) throw new Error('noedge');
+    samples.sort((x,y)=>x.err-y.err);
+    const best = samples[0];
+    S.offset = Math.round(best.offset);
+    S.err = Math.round(best.err);
+    S.method = 'Dateヘッダ境界 ×' + samples.length + '(往復 ' + Math.round(best.rtt) + ' ms)';
+    updateSyncUI();
+  }
+  function updateSyncUI(){
+    $('offsetText').textContent = (S.offset>=0?'+':'') + S.offset + ' ms';
+    $('errText').textContent = S.err==null ? '-- ms' : '±' + S.err + ' ms';
+    $('methodText').textContent = S.method;
+    if(S.err==null) setPill('pillSync','warn','時刻 端末時計のまま');
+    else if(S.err <= 60) setPill('pillSync','ok','時刻 同期済 ±'+S.err+'ms');
+    else setPill('pillSync','warn','時刻 同期 ±'+S.err+'ms');
+  }
+
+  // ---------- 音源 ----------
+  async function ensureContext(){
+    if(!S.ctx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      S.ctx = new AC({ latencyHint: 'interactive' });
+      S.gain = S.ctx.createGain(); S.gain.connect(S.ctx.destination);
+      S.gain.gain.value = Number($('vol').value)/100;
+      S.ctx.onstatechange = () => { if(S.ctx.state==='running' && (S.state==='ready'||S.state==='playing')) arm(); };
+    }
+    if(S.ctx.state !== 'running') await S.ctx.resume();
+    // iOS: 無音の <audio> を再生して音声セッションを「再生」扱いにし、マナーモードでも Web Audio が鳴るようにする
+    try{ const u=$('unmute'); u.volume=0.01; await u.play(); }catch(e){}
+    // 無音バッファを1回鳴らしてロック解除
+    const b = S.ctx.createBuffer(1, 1, S.ctx.sampleRate); const s = S.ctx.createBufferSource(); s.buffer=b; s.connect(S.ctx.destination); s.start();
+  }
+  function latencySec(){
+    const c = S.ctx; if(!c) return 0;
+    const l = (typeof c.outputLatency === 'number' && c.outputLatency > 0) ? c.outputLatency : (c.baseLatency || 0);
+    return l;
+  }
+  async function loadAudio(){
+    setPill('pillAudio','','音源 準備中…');
+    const url = S.config.audio;
+    if(url){
+      const r = await fetch(url); if(!r.ok) throw new Error('audio '+r.status);
+      const ab = await r.arrayBuffer();
+      S.buffer = await new Promise((res,rej)=>{ const p=S.ctx.decodeAudioData(ab, res, rej); if(p&&p.then) p.then(res,rej); });
+      setPill('pillAudio','ok','音源 準備完了 ('+mmss(S.buffer.duration)+')');
+    }else{
+      S.buffer = await renderDemo(S.config);
+      setPill('pillAudio','led','デモ音源 ('+mmss(S.buffer.duration)+')');
+    }
+  }
+  // デモ用のBGMを端末内で合成する(本番は show.json の audio に音源URLを指定)
+  async function renderDemo(cfg){
+    const dur = Math.max(30, Number(cfg.duration)||120);
+    const sr = 44100;
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    const oc = new OAC(1, Math.ceil(sr*dur), sr);
+    const master = oc.createGain(); master.gain.value = 0.8; master.connect(oc.destination);
+    const bpm = 100, beat = 60/bpm;
+    const chords = [[0,4,7],[5,9,12],[7,11,14],[3,7,10],[8,12,15],[10,14,17],[0,4,7,11],[2,5,9]];
+    const scenes = (cfg.scenes && cfg.scenes.length) ? cfg.scenes : [{t:0,name:''}];
+    const f = n => 220 * Math.pow(2, n/12);
+    // パッド(シーンごとにコード)
+    scenes.forEach((sc,i)=>{
+      const start = sc.t, end = (scenes[i+1] ? scenes[i+1].t : dur);
+      if(start >= dur) return;
+      const g = oc.createGain(); g.connect(master);
+      g.gain.setValueAtTime(0, start); g.gain.linearRampToValueAtTime(0.10, start+1.2);
+      g.gain.setValueAtTime(0.10, Math.max(start+1.2, end-0.8)); g.gain.linearRampToValueAtTime(0, end);
+      const lp = oc.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value = 1200; lp.connect(g);
+      chords[i % chords.length].forEach(n=>{
+        [-4, 4].forEach(det=>{ const o=oc.createOscillator(); o.type='sawtooth'; o.frequency.value=f(n-12); o.detune.value=det; o.connect(lp); o.start(start); o.stop(end); });
+      });
+      // シーン切替のチャイム(ベル)
+      if(i>0){ [1,2.4,4.1].forEach((h,k)=>{ const o=oc.createOscillator(); o.type='sine'; o.frequency.value=f(chords[i%chords.length][0]+12)*h;
+        const bg=oc.createGain(); bg.gain.setValueAtTime(0.18/(k+1), start); bg.gain.exponentialRampToValueAtTime(0.0005, start+1.6); o.connect(bg); bg.connect(master); o.start(start); o.stop(start+1.7); }); }
+    });
+    // キック・ハイハット・ベース
+    for(let t=0; t<dur; t+=beat){
+      const k = oc.createOscillator(); const kg = oc.createGain();
+      k.frequency.setValueAtTime(150, t); k.frequency.exponentialRampToValueAtTime(45, t+0.12);
+      kg.gain.setValueAtTime(0.9, t); kg.gain.exponentialRampToValueAtTime(0.001, t+0.22);
+      k.connect(kg); kg.connect(master); k.start(t); k.stop(t+0.25);
+      const hh = oc.createBufferSource(); const nb = oc.createBuffer(1, Math.floor(sr*0.05), sr); const d=nb.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
+      hh.buffer = nb; const hg = oc.createGain(); hg.gain.value = 0.12; const hp = oc.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=6000;
+      hh.connect(hp); hp.connect(hg); hg.connect(master); hh.start(t+beat/2);
+      const sceneIdx = Math.max(0, scenes.findIndex((s,i)=> t>=s.t && (!scenes[i+1] || t<scenes[i+1].t)));
+      const root = chords[sceneIdx % chords.length][0];
+      const b = oc.createOscillator(); b.type='triangle'; b.frequency.value = f(root-24); const bgn=oc.createGain();
+      bgn.gain.setValueAtTime(0.25, t); bgn.gain.exponentialRampToValueAtTime(0.002, t+beat*0.9); b.connect(bgn); bgn.connect(master); b.start(t); b.stop(t+beat);
+    }
+    return await oc.startRendering();
+  }
+  function beepBuffer(freq, len){
+    const sr=S.ctx.sampleRate, b=S.ctx.createBuffer(1, Math.floor(sr*len), sr), d=b.getChannelData(0);
+    for(let i=0;i<d.length;i++){ const env=Math.min(1, i/200) * Math.pow(1-i/d.length, 1.5); d[i]=Math.sin(2*Math.PI*freq*i/sr)*env*0.6; }
+    return b;
+  }
+
+  // ---------- スケジューリング ----------
+  function stopAll(){
+    if(S.source){ try{ S.source.onended=null; S.source.stop(); }catch(e){} S.source=null; }
+    S.prerollSources.forEach(s=>{ try{ s.stop(); }catch(e){} }); S.prerollSources=[];
+  }
+  function arm(){
+    if(!S.ctx || !S.buffer || !S.t0){ return; }
+    stopAll();
+    const c = S.ctx;
+    const now = serverNow();
+    const startIn = (S.t0 - now)/1000;                     // 開演までの秒数(負なら開演済み)
+    const comp = latencySec() + S.trim/1000;               // 出力遅延 + 手動補正
+    const at = c.currentTime + startIn - comp;
+    if(-startIn >= S.buffer.duration){ S.state='done'; return; }
+    const src = c.createBufferSource(); src.buffer=S.buffer; src.connect(S.gain);
+    if(at >= c.currentTime) src.start(at); else src.start(c.currentTime, c.currentTime - at);
+    src.onended = () => { if(S.source===src){ S.source=null; S.state='done'; } };
+    S.source = src;
+    S.state = startIn > 0 ? 'ready' : 'playing';
+    if($('preroll').checked){
+      [3,2,1].forEach(n=>{ const t = at - n; if(t > c.currentTime){ const s=c.createBufferSource(); s.buffer=beepBuffer(880,0.12); s.connect(S.gain); s.start(t); S.prerollSources.push(s); } });
+      const t0b = at; if(t0b > c.currentTime){ const s=c.createBufferSource(); s.buffer=beepBuffer(1760,0.2); s.connect(S.gain); s.start(t0b); S.prerollSources.push(s); }
+    }
+    $('latText').textContent = Math.round(latencySec()*1000) + ' ms';
+  }
+
+  // ---------- 画面 ----------
+  function tick(){
+    const now = serverNow();
+    const big=$('big'), label=$('stageLabel'), scene=$('sceneName'), small=$('stageSmall'), bar=$('bar');
+    if(!S.t0){ label.textContent='開演時刻'; big.textContent='未定'; scene.textContent=''; }
+    else{
+      const dt = (now - S.t0)/1000;
+      const dur = S.buffer ? S.buffer.duration : (Number(S.config.duration)||0);
+      if(dt < 0){
+        label.textContent = '開演まで'; big.textContent = mmss(-dt); scene.textContent = S.state==='ready' ? '準備完了。このままお待ちください' : '';
+        bar.style.width='0%';
+      }else if(dur && dt < dur){
+        label.textContent = '上演中'; big.textContent = mmss(dt);
+        const sc = currentScene(dt); scene.textContent = sc ? sc.name : '';
+        bar.style.width = (dt/dur*100).toFixed(2)+'%';
+        if(S.state==='ready'){ S.state='playing'; }
+        if(S.state==='playing' && $('cta').textContent!=='再生中') $('cta').textContent='再生中';
+      }else{
+        label.textContent = '終演'; big.textContent = mmss(dur||dt); scene.textContent='ご来場ありがとうございました'; bar.style.width='100%';
+        if(S.state==='playing'){ S.state='done'; $('cta').textContent='終演'; }
+      }
+      // シーン一覧のハイライト
+      const idx = dt<0 ? -1 : sceneIndex(dt);
+      if(idx !== S.lastSceneIdx){ S.lastSceneIdx = idx; document.querySelectorAll('#scenes li').forEach((li,i)=>{ li.classList.toggle('now', i===idx); li.classList.toggle('past', i<idx); }); }
+      // ビート表示(100BPM=0.6s)
+      if(dt>=0 && dur && dt<dur){ const ph = (dt % 0.6); $('beat').classList.toggle('on', ph < 0.1); } else $('beat').classList.remove('on');
+    }
+    small.innerHTML = '開演 <span id="t0Text">'+(S.t0?fmtJST(S.t0):'未定')+'</span> ・ 現在 '+fmtJST(now)+' (日本時間)';
+    requestAnimationFrame(tick);
+  }
+  function sceneIndex(dt){ const sc=S.config.scenes||[]; let idx=-1; for(let i=0;i<sc.length;i++){ if(dt>=sc[i].t) idx=i; } return idx; }
+  function currentScene(dt){ const i=sceneIndex(dt); return i>=0 ? S.config.scenes[i] : null; }
+
+  // ---------- 画面を消さない ----------
+  async function keepAwake(){
+    try{
+      if('wakeLock' in navigator){ S.wake = await navigator.wakeLock.request('screen'); setPill('pillWake','ok','画面 消灯しない'); S.wake.addEventListener('release',()=>setPill('pillWake','warn','画面 通常')); }
+      else setPill('pillWake','warn','画面 手動で消さないで');
+    }catch(e){ setPill('pillWake','warn','画面 手動で消さないで'); }
+  }
+  document.addEventListener('visibilitychange', async ()=>{
+    if(document.visibilityState==='visible'){
+      if(S.wake===null || (S.wake && S.wake.released)) keepAwake();
+      if(S.ctx){ try{ await S.ctx.resume(); }catch(e){} if(S.state==='ready'||S.state==='playing') arm(); }
+    }
+  });
+
+  // ---------- 準備ボタン ----------
+  $('cta').addEventListener('click', async ()=>{
+    const btn=$('cta'); btn.disabled=true; btn.textContent='準備中…'; S.state='preparing';
+    try{
+      await ensureContext();
+      keepAwake();
+      const tasks = [ loadAudio(), syncClock().catch(e=>{ S.err=null; S.method='端末時計(サーバーに届かず)'; updateSyncUI(); }) ];
+      await Promise.all(tasks);
+      await loadConfig(true);
+      arm();
+      btn.textContent = S.state==='playing' ? '再生中' : '準備完了 ― 開演を待っています';
+      $('hint').innerHTML = 'このまま<b>画面をつけたまま</b>お待ちください。開演時刻に自動で始まります。';
+      if(!S.pollTimer) S.pollTimer = setInterval(()=>loadConfig(true), 20000);
+    }catch(e){
+      console.error(e); btn.disabled=false; btn.textContent='準備OK ― 音を出す(もう一度)'; toast('準備に失敗しました: '+(e.message||e)); S.state='idle';
+    }
+  });
+  $('resync').addEventListener('click', async ()=>{ $('resync').disabled=true; try{ await syncClock(); toast('時刻を合わせ直しました'); if(S.state==='ready'||S.state==='playing') arm(); }catch(e){ toast('サーバーに届きませんでした'); } $('resync').disabled=false; });
+  const setTrim = v => { S.trim = Math.max(-1000, Math.min(1000, v)); localStorage.setItem('ds.trim', S.trim); $('trimText').textContent=(S.trim>=0?'+':'')+S.trim+' ms'; if(S.state==='ready'||S.state==='playing') arm(); };
+  $('trimMinus').addEventListener('click', ()=>setTrim(S.trim-10));
+  $('trimPlus').addEventListener('click', ()=>setTrim(S.trim+10));
+  $('trimReset').addEventListener('click', ()=>setTrim(0));
+  $('vol').addEventListener('input', e=>{ const v=Number(e.target.value); $('volText').textContent=v+'%'; if(S.gain) S.gain.gain.value=v/100; });
+  $('preroll').addEventListener('change', ()=>{ if(S.state==='ready') arm(); });
+  setTrim(S.trim);
+
+  // ---------- 星空(装飾) ----------
+  (function stars(){
+    const cv=$('stars'); const st=cv.parentElement; const dpr=Math.min(2,window.devicePixelRatio||1);
+    function draw(){ cv.width=st.clientWidth*dpr; cv.height=st.clientHeight*dpr; const g=cv.getContext('2d'); g.clearRect(0,0,cv.width,cv.height);
+      let seed=7; const rnd=()=>{ seed=(seed*16807)%2147483647; return seed/2147483647; };
+      for(let i=0;i<70;i++){ const x=rnd()*cv.width,y=rnd()*cv.height,r=rnd()*1.4*dpr+0.3; g.fillStyle='rgba(238,241,250,'+(0.15+rnd()*0.5)+')'; g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fill(); } }
+    draw(); window.addEventListener('resize', draw);
+  })();
+
+  // ---------- 起動 ----------
+  loadConfig(false).then(()=>{ updateSyncUI(); requestAnimationFrame(tick); if(params.get('autostart')) $('cta').click(); });
+  window.__ds = S; // 動作確認用
+  if('serviceWorker' in navigator && location.protocol==='https:'){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+})();
+</script>
+</body>
+</html>
