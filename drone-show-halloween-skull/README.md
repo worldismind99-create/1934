@@ -15,6 +15,13 @@ Blender(Skybrushなし・素のBlender)で自動構築した、ハロウィン�
 | `safety_report.json` | 検証結果(全編 0.125秒刻み・全機・全ペア) |
 | `previews/` | Cyclesレンダー(観客視点 `page_*` / スカル拡大 `detail_*` / 地上目線 `ground_*`)、正面ギャラリーSVG、本編30秒のプレビュー動画 `preview_content.mp4` |
 
+## Blender(3D Jutsu)への反映
+
+同じ構築スクリプトをリモートBlender 5.2 LTS(3D Jutsu)で実行し、シーンとして反映済み:
+https://higgsfield.ai/3d-jutsu/dd44eeaa-9c69-47f5-a3bc-dee769c8f81b (リビジョン1)。
+Web上で回転・再生でき、編集用 .blend(約40MB、パス・エンプティ600個込み)もそこから取得できる。
+ローカルのBlenderで開く場合は本フォルダの .blend(6.9MB・圧縮保存)を使えばよい。
+
 ## 検証結果(実機閾値: 水平5 / 上昇4 / 下降3 m/s、加速度4 m/s²、機体間1.5m)
 
 | 指標 | 実測 | 設計目標 | 判定 |
