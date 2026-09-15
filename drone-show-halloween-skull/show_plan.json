@@ -1,0 +1,90 @@
+{
+  "show": "20261031_Halloween_SKULL_Animation_v01",
+  "mode": "30s",
+  "fps": 24,
+  "drones": 300,
+  "frame_end": 4088,
+  "content_frames": [
+    1458,
+    2178
+  ],
+  "content_sec": 30.0,
+  "duration_sec": 170.3,
+  "pages": [
+    {
+      "page": "01 スカル(3D・スキャン点灯・首振り・顎開閉・目の脈動・紫の霧)",
+      "frame_in": 1458,
+      "frame_out": 2178,
+      "sec_in": 60.8,
+      "sec_out": 90.8,
+      "duration": 30.0,
+      "lit_drones": 300
+    }
+  ],
+  "markers": [
+    {
+      "name": "離陸(消灯)",
+      "frame": 0,
+      "sec": 0.0
+    },
+    {
+      "name": "遷移(消灯)",
+      "frame": 360,
+      "sec": 15.0
+    },
+    {
+      "name": "本編開始 スカル(30秒)",
+      "frame": 1458,
+      "sec": 60.8
+    },
+    {
+      "name": "スカル.首振り",
+      "frame": 1578,
+      "sec": 65.8
+    },
+    {
+      "name": "スカル.顎開閉",
+      "frame": 1986,
+      "sec": 82.8
+    },
+    {
+      "name": "本編終了",
+      "frame": 2178,
+      "sec": 90.8
+    },
+    {
+      "name": "帰投(消灯)",
+      "frame": 2178,
+      "sec": 90.8
+    },
+    {
+      "name": "降下・着陸",
+      "frame": 3608,
+      "sec": 150.3
+    },
+    {
+      "name": "着陸完了",
+      "frame": 4088,
+      "sec": 170.3
+    }
+  ],
+  "formations": {
+    "01_Skull": {
+      "n_lit": 300,
+      "min_spacing_m": 2.27
+    }
+  },
+  "lit_ratio_per_drone": {
+    "min": 0.088,
+    "max": 0.176,
+    "mean": 0.161
+  },
+  "text_spacing_m": 0.0,
+  "transition_sim": {
+    "pairs_closer_than_1.8m": 0,
+    "closest_pairs": [],
+    "forced_arrivals": 0,
+    "path_keys": 369237,
+    "limit_distance_patches": 0
+  }
+}

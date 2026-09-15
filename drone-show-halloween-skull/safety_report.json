@@ -1,0 +1,106 @@
+{
+  "max_vel_xy": 2.850084269481862,
+  "max_vel_up": 2.36932373046875,
+  "max_vel_down": 1.78912353515625,
+  "max_accel": 3.497529738159525,
+  "min_dist": 2.267828799915185,
+  "min_dist_frame": 1773,
+  "min_dist_pair": [
+    85,
+    113
+  ],
+  "altitude_min_airborne": 20.265605926513672,
+  "altitude_max": 88.07460021972656,
+  "n_violations": 0,
+  "violations": [],
+  "segments": [
+    {
+      "from": "離陸(消灯)",
+      "frame": 0,
+      "sec": 0.0,
+      "max_vel_xy": 0.0,
+      "max_vel_up": 2.0,
+      "max_vel_down": -0.03,
+      "max_accel": 0.52,
+      "min_dist": 3.0
+    },
+    {
+      "from": "遷移(消灯)",
+      "frame": 360,
+      "sec": 15.0,
+      "max_vel_xy": 1.05,
+      "max_vel_up": 2.37,
+      "max_vel_down": -0.0,
+      "max_accel": 1.1,
+      "min_dist": 2.27
+    },
+    {
+      "from": "本編開始 スカル(30秒)",
+      "frame": 1458,
+      "sec": 60.8,
+      "max_vel_xy": 0.0,
+      "max_vel_up": 0.0,
+      "max_vel_down": -0.0,
+      "max_accel": 0.62,
+      "min_dist": 2.27
+    },
+    {
+      "from": "スカル.首振り",
+      "frame": 1578,
+      "sec": 65.8,
+      "max_vel_xy": 2.85,
+      "max_vel_up": 0.0,
+      "max_vel_down": -0.0,
+      "max_accel": 1.38,
+      "min_dist": 2.27
+    },
+    {
+      "from": "スカル.顎開閉",
+      "frame": 1986,
+      "sec": 82.8,
+      "max_vel_xy": 1.92,
+      "max_vel_up": 1.77,
+      "max_vel_down": 1.43,
+      "max_accel": 3.5,
+      "min_dist": 2.27
+    },
+    {
+      "from": "本編終了",
+      "frame": 2178,
+      "sec": 90.8,
+      "max_vel_xy": 0.8,
+      "max_vel_up": 0.2,
+      "max_vel_down": 1.79,
+      "max_accel": 0.86,
+      "min_dist": 2.27
+    },
+    {
+      "from": "降下・着陸",
+      "frame": 3608,
+      "sec": 150.3,
+      "max_vel_xy": 0.0,
+      "max_vel_up": -0.03,
+      "max_vel_down": 1.5,
+      "max_accel": 0.29,
+      "min_dist": 3.0
+    }
+  ],
+  "limits": {
+    "vel_xy": 5.0,
+    "vel_up": 4.0,
+    "vel_down": 3.0,
+    "accel": 4.0,
+    "min_dist": 1.5
+  },
+  "design_targets": {
+    "vel_xy": 3.0,
+    "vel_up": 2.4,
+    "vel_down": 1.8,
+    "accel": 2.4,
+    "min_dist": 1.5
+  },
+  "sample_step_sec": 0.125,
+  "n_drones": 300,
+  "frames": 4088,
+  "duration_sec": 170.3
+}

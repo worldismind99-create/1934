@@ -1,0 +1,5 @@
+__pycache__/
+*.blend1
+*.blend2
+build_verify.log
+previews/video_frames/
