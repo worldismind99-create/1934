@@ -15,6 +15,19 @@ Blender(Skybrushなし・素のBlender)で自動構築した、ハロウィン�
 | `safety_report.json` | 検証結果(全編 0.125秒刻み・全機・全ペア) |
 | `previews/` | Cyclesレンダー(観客視点 `page_*` / スカル拡大 `detail_*` / 地上目線 `ground_*`)、正面ギャラリーSVG、本編30秒のプレビュー動画 `preview_content.mp4` |
 
+## 絵柄JSON版(`SHOW_MODE=picture`、現在の既定)
+
+デザインツールで描いた絵柄(`formations/*.json`: `points` [x, z, …] と `colors` [r, g, b])を
+そのまま本編30秒のページにするモード。現在の既定は「マンション マネジメント / 9110」ロゴ
+(`formations/picture_45_mansion_management_9110.json`、288機・白123/青141/消灯24)。
+
+- 点間隔が1.5m(安全距離ぎりぎり)だったため **1.2倍に拡大**(`SHOW_PICTURE_SCALE`)して最小1.8mに。幅60×高さ46m。
+- 振り付け: 0〜3s 白文字を左→右スイープ点灯 → 2〜5s 青を左→右 → 10s/18s 青がパルス →
+  14s/22s 白いきらめきが左→右に走る → 28.5〜30s 消灯。
+- 検証: 水平1.07/上昇2.35/下降1.80 m/s、加速度2.72 m/s²、最小距離1.80m、違反0。
+- 別の絵柄にするには `SHOW_PICTURE_JSON=formations/xxx.json` を指定して再実行。
+  スカル版は `SHOW_MODE=30s`。
+
 ## Blender(3D Jutsu)への反映
 
 同じ構築スクリプトをリモートBlender 5.2 LTS(3D Jutsu)で実行し、シーンとして反映済み:

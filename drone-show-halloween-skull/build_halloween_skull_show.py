@@ -55,7 +55,10 @@ V_DESIGN = {"xy": 3.0, "up": 2.4, "down": 1.8}   # 遷移設計速度(上限 5/4
 EASE_PEAK = 1.5             # ベジエ(イーズイン/アウト)のピーク速度/平均速度
 N_STARS = 90                # 星空間奏の点灯機数
 SKULL_SCALE = 1.25          # スカル全体の倍率(1.0 = 幅26m → 1.25 = 幅33m)
-SHOW_MODE = os.environ.get("SHOW_MODE", "30s")   # "30s": 本編30秒のスカル単独 / "full": 7ページ約8分
+SHOW_MODE = os.environ.get("SHOW_MODE", "picture")   # "picture": 絵柄JSON(30秒) / "30s": スカル30秒 / "full": 7ページ約8分
+PICTURE_JSON = os.environ.get("SHOW_PICTURE_JSON", "formations/picture_45_mansion_management_9110.json")
+PICTURE_SCALE = float(os.environ.get("SHOW_PICTURE_SCALE", "1.2"))   # 点間隔1.5m→1.8m(安全距離+余裕)に拡大
+PICTURE_DATA = None          # ここに dict を直接入れるとファイルを読まない(リモート実行用)
 CONTENT_SEC = 30            # 30s モードの本編尺
 SEED = 1934
 SHOW_NAME = "20261031_Halloween_SKULL_Animation_v01"
@@ -1375,6 +1378,91 @@ def page_skull_30s(sb, F_skull, f_in, jaw_pivot):
     return f_out
 
 
+# =============================== 絵柄JSON(デザインツール書き出し)の取り込み ===============================
+def classify_color(c):
+    r, g, b = c[:3]
+    if max(r, g, b) < 0.05:
+        return "dark"
+    if min(r, g, b) > 0.85:
+        return "white"
+    if b > 0.8 and r < 0.4:
+        return "blue"
+    if r > 0.8 and g < 0.4:
+        return "red"
+    if g > 0.8 and r < 0.5:
+        return "green"
+    return "other"
+
+
+def make_picture(data=None, path=None, scale=PICTURE_SCALE):
+    """デザインツールの書き出しJSON({points:[[x,z,..],..], colors:[[r,g,b],..]})を
+    色グループごとのパーツに変換。2Dなら奥行き0の平面として観客正面に置く。
+    返り値: (parts, meta)"""
+    if data is None:
+        with open(os.path.join(HERE, path), encoding="utf-8") as fh:
+            data = json.load(fh)
+    P = np.array([[p[0], p[2] if (data.get("is3d") and len(p) > 2) else 0.0, p[1]] for p in data["points"]], float)
+    if data.get("is3d") and P.shape[1] == 3 and len(data["points"][0]) > 3:
+        P[:, 1] = [p[2] for p in data["points"]]
+        P[:, 2] = [p[1] for p in data["points"]]
+    C = np.array(data["colors"], float)[:, :3]
+    lit = C.max(1) > 0.05
+    center = (P[lit].min(0) + P[lit].max(0)) / 2 if lit.any() else P.mean(0)
+    P = (P - center) * scale
+    groups = {}
+    for p, c in zip(P, C):
+        k = classify_color(c)
+        groups.setdefault(k, ([], []))
+        groups[k][0].append(p)
+        groups[k][1].append(c)
+    parts = {}
+    for k, (pts, cols) in groups.items():
+        col = (0.0, 0.0, 0.0) if k == "dark" else tuple(np.mean(cols, 0))
+        parts[k] = (np.array(pts), col)
+    meta = {"name": data.get("name", "picture"), "n": len(P), "scale": scale,
+            "width_m": float(P[lit, 0].max() - P[lit, 0].min()) if lit.any() else 0.0,
+            "height_m": float(P[lit, 2].max() - P[lit, 2].min()) if lit.any() else 0.0,
+            "min_gap_m": round(min_pair_dist(P[lit]), 2) if lit.sum() > 1 else None,
+            "groups": {k: len(v[0]) for k, v in parts.items()}}
+    return parts, meta
+
+
+def page_picture_30s(sb, F, f_in, meta):
+    """絵柄(ロゴ)本編30秒: 0-3s 白を左→右にスイープ点灯 / 2-5s 青を左→右 / 10s・18s 青がパルス /
+    14s・22s 左→右へ白いきらめきの波 / 28.5-30s 消灯。暗い点(dark)は位置にいるが点灯しない"""
+    f_out = f_in + sec(CONTENT_SEC)
+    r = random.Random(45)
+    tgt = F["rest_world"]
+    xs = tgt[:, 0]
+    x0, x1 = xs.min(), xs.max()
+    ids = sb.formation_ids(F)
+    for di, ti in ids:
+        part = F["part"][ti]
+        col = F["colors"][ti]
+        if part == "dark":
+            continue
+        u = (xs[ti] - x0) / max(1e-6, (x1 - x0))
+        start = 0.0 if part == "white" else 2.0
+        ff = f_in + sec(start + u * 3.0)
+        sb.fade(di, ff, ff + sec(0.4), BLACK, col)
+        sb.lit_frames[di] += f_out - ff
+        if part != "white":                       # 青: 10s・18s に 2回パルス
+            for t_s in (10.0, 18.0):
+                sb.key(di, f_in + sec(t_s), col, "LINEAR")
+                sb.key(di, f_in + sec(t_s + 0.5), tuple(min(1.0, v * 1.6 + 0.3) for v in col), "LINEAR")
+                sb.key(di, f_in + sec(t_s + 1.2), col, "CONSTANT")
+        for t_s in (14.0, 22.0):                  # 左→右へ走るきらめき(白)
+            tw = f_in + sec(t_s + u * 2.5)
+            sb.key(di, tw, col, "LINEAR")
+            sb.key(di, tw + sec(0.25), COL["white"], "LINEAR")
+            sb.key(di, tw + sec(0.7), col, "CONSTANT")
+    sb.blackout(range(N), f_out, dur=sec(1.5))
+    sb.marker("絵柄.青パルス", f_in + sec(10))
+    sb.marker("絵柄.きらめき", f_in + sec(14))
+    sb.pages.append((f"01 {meta['name']}(ロゴ・スイープ点灯・パルス・きらめき)", f_in, f_out, F["n_lit"]))
+    return f_out
+
+
 # =============================== ショー本体 ===============================
 def build_show():
     t0 = time.time()
@@ -1387,6 +1475,38 @@ def build_show():
     setup_cameras(scene, sb.oya_show)
 
     JAW_PIVOT = (0.0, 1.0 * SKULL_SCALE, -7.0 * SKULL_SCALE)
+    if SHOW_MODE == "picture":
+        # ---------------- 絵柄版: 離陸(消灯) → 遷移(消灯) → 絵柄30秒 → 帰投(消灯) → 着陸 ----------------
+        print("formations:")
+        parts, meta = make_picture(PICTURE_DATA, PICTURE_JSON)
+        print(f"  picture {meta}")
+        F_pic = sb.add_formation("01_Picture", parts)
+        f = sb.frame
+        sb.marker("遷移(消灯)", f)
+        f_in = sb.move_all(F_pic, f)
+        sb.marker(f"本編開始 {meta['name']}(30秒)", f_in)
+        f_out = page_picture_30s(sb, F_pic, f_in, meta)
+        sb.marker("本編終了", f_out)
+        sb.marker("帰投(消灯)", f_out)
+        grid_f = {"name": "Takeoff grid", "empties": sb.grid, "part": ["grid"] * N,
+                  "rest_world": sb.grid_pos + np.array([0, 0, TAKEOFF_ALT])}
+        f_land_in = sb.move_all(grid_f, f_out + sec(1))
+        sb.marker("降下・着陸", f_land_in)
+        sb.oya_takeoff.location = (0, 0, TAKEOFF_ALT)
+        sb.oya_takeoff.keyframe_insert("location", frame=f_land_in)
+        sb.oya_takeoff.location = (0, 0, 0)
+        f_end = f_land_in + sec(20)
+        sb.oya_takeoff.keyframe_insert("location", frame=f_end)
+        sb.marker("着陸完了", f_end)
+        scene.frame_end = f_end
+        scene.use_preview_range = True
+        scene.frame_preview_start = f_in
+        scene.frame_preview_end = f_out
+        for i in range(N):
+            sb.key(i, f_end, BLACK, "CONSTANT")
+        sb.picture_meta = meta
+        return finish_show(sb, scene, f_land_in, f_end, 0.0, (f_in, f_out))
+
     if SHOW_MODE == "30s":
         # ---------------- 30秒版: 離陸(消灯) → 遷移(消灯) → スカル30秒 → 帰投(消灯) → 着陸 ----------------
         print("formations:")
@@ -1659,6 +1779,7 @@ def finish_show(sb, scene, f_land_in, f_end, text_spacing, content):
                                 "max": round(float(sb.lit_frames.max() / f_end), 3),
                                 "mean": round(float(sb.lit_frames.mean() / f_end), 3)},
         "text_spacing_m": round(text_spacing, 2),
+        "picture": getattr(sb, "picture_meta", None),
         "transition_sim": {"pairs_closer_than_1.8m": len(sb.unresolved), "closest_pairs": sb.unresolved[:40],
                            "forced_arrivals": sb.n_forced, "path_keys": sb.n_path_keys, "limit_distance_patches": sb.n_patches},
     }

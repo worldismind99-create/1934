@@ -1,24 +1,24 @@
 {
   "show": "20261031_Halloween_SKULL_Animation_v01",
-  "mode": "30s",
+  "mode": "picture",
   "fps": 24,
   "drones": 300,
-  "frame_end": 4088,
+  "frame_end": 4417,
   "content_frames": [
-    1458,
-    2178
+    1740,
+    2460
   ],
   "content_sec": 30.0,
-  "duration_sec": 170.3,
+  "duration_sec": 184.0,
   "pages": [
     {
-      "page": "01 スカル(3D・スキャン点灯・首振り・顎開閉・目の脈動・紫の霧)",
-      "frame_in": 1458,
-      "frame_out": 2178,
-      "sec_in": 60.8,
-      "sec_out": 90.8,
+      "page": "01 新しい絵柄 45(ロゴ・スイープ点灯・パルス・きらめき)",
+      "frame_in": 1740,
+      "frame_out": 2460,
+      "sec_in": 72.5,
+      "sec_out": 102.5,
       "duration": 30.0,
-      "lit_drones": 300
+      "lit_drones": 288
     }
   ],
   "markers": [
@@ -33,58 +33,71 @@
       "sec": 15.0
     },
     {
-      "name": "本編開始 スカル(30秒)",
-      "frame": 1458,
-      "sec": 60.8
+      "name": "本編開始 新しい絵柄 45(30秒)",
+      "frame": 1740,
+      "sec": 72.5
     },
     {
-      "name": "スカル.首振り",
-      "frame": 1578,
-      "sec": 65.8
+      "name": "絵柄.青パルス",
+      "frame": 1980,
+      "sec": 82.5
     },
     {
-      "name": "スカル.顎開閉",
-      "frame": 1986,
-      "sec": 82.8
+      "name": "絵柄.きらめき",
+      "frame": 2076,
+      "sec": 86.5
     },
     {
       "name": "本編終了",
-      "frame": 2178,
-      "sec": 90.8
+      "frame": 2460,
+      "sec": 102.5
     },
     {
       "name": "帰投(消灯)",
-      "frame": 2178,
-      "sec": 90.8
+      "frame": 2460,
+      "sec": 102.5
     },
     {
       "name": "降下・着陸",
-      "frame": 3608,
-      "sec": 150.3
+      "frame": 3937,
+      "sec": 164.0
     },
     {
       "name": "着陸完了",
-      "frame": 4088,
-      "sec": 170.3
+      "frame": 4417,
+      "sec": 184.0
     }
   ],
   "formations": {
-    "01_Skull": {
-      "n_lit": 300,
-      "min_spacing_m": 2.27
+    "01_Picture": {
+      "n_lit": 288,
+      "min_spacing_m": 1.8
     }
   },
   "lit_ratio_per_drone": {
-    "min": 0.088,
-    "max": 0.176,
-    "mean": 0.161
+    "min": 0.0,
+    "max": 0.163,
+    "mean": 0.132
   },
   "text_spacing_m": 0.0,
+  "picture": {
+    "name": "新しい絵柄 45",
+    "n": 288,
+    "scale": 1.2,
+    "width_m": 60.366,
+    "height_m": 46.1328,
+    "min_gap_m": 1.8,
+    "groups": {
+      "white": 123,
+      "dark": 24,
+      "blue": 141
+    }
+  },
   "transition_sim": {
     "pairs_closer_than_1.8m": 0,
     "closest_pairs": [],
-    "forced_arrivals": 0,
-    "path_keys": 369237,
+    "forced_arrivals": 1,
+    "path_keys": 385086,
     "limit_distance_patches": 0
   }
 }

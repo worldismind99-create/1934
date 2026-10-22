@@ -228,6 +228,9 @@ def main():
             if "スカル" in name and (b - a) <= 24 * 40:      # 30秒版
                 gal += [(a + 24 * 3, name + " 点灯中"), (a + 24 * 11, name + " 左向き"), (a + 24 * 19, name + " 右向き"),
                         (a + 24 * 25, name + " 顎開")]
+            elif "ロゴ" in pg["page"] or "絵柄" in pg["page"]:
+                gal += [(a + 24 * 2, name + " 白スイープ"), (a + 24 * 4, name + " 青スイープ"),
+                        (a + 24 * 10, name + " パルス"), (a + 24 * 15, name + " きらめき")]
             elif "スカル" in name:
                 gal += [(a + 24 * 7, name + " 点灯直後"), (a + 24 * 23, name + " 90°"), (a + 24 * 37, name + " 180°"),
                         (a + 24 * 69, name + " 顎開")]
@@ -247,9 +250,9 @@ def main():
     if os.environ.get("SHOW_RENDER", "1") != "0":
         samples = int(os.environ.get("SHOW_SAMPLES", "16"))
         render_frames(gal, samples=samples)
-        skull = [g for g in gal if "スカル" in g[1]]
+        skull = [g for g in gal if "スカル" in g[1] or "ロゴ" in g[1] or "絵柄" in g[1]]
         render_frames(skull, samples=samples, cam="DetailCam", prefix="detail")
-        render_frames([g for g in gal if "スカル" in g[1]][:1] + [g for g in gal if "ランタン" in g[1]][:1],
+        render_frames(skull[:1] + [g for g in gal if "ランタン" in g[1]][:1],
                       samples=samples, cam="GroundCam", prefix="ground")
     if os.environ.get("SHOW_VIDEO") == "1":
         # 本編区間を 12fps・640x480 で連番レンダー → ffmpeg があれば mp4 に(DetailCam=スカル拡大)
