@@ -1,71 +1,62 @@
 {
   "show": "20261031_Halloween_SKULL_Animation_v01",
   "mode": "picture",
+  "start": "airborne",
   "fps": 24,
   "drones": 300,
-  "frame_end": 4417,
+  "frame_end": 960,
   "content_frames": [
-    1740,
-    2460
+    0,
+    960
   ],
-  "content_sec": 30.0,
-  "duration_sec": 184.0,
+  "content_sec": 40.0,
+  "duration_sec": 40.0,
   "pages": [
     {
       "page": "01 新しい絵柄 45(ロゴ・スイープ点灯・パルス・きらめき)",
-      "frame_in": 1740,
-      "frame_out": 2460,
-      "sec_in": 72.5,
-      "sec_out": 102.5,
-      "duration": 30.0,
+      "frame_in": 276,
+      "frame_out": 936,
+      "sec_in": 11.5,
+      "sec_out": 39.0,
+      "duration": 27.5,
       "lit_drones": 288
     }
   ],
   "markers": [
     {
-      "name": "離陸(消灯)",
+      "name": "空中待機グリッド(消灯)",
       "frame": 0,
       "sec": 0.0
     },
     {
       "name": "遷移(消灯)",
-      "frame": 360,
-      "sec": 15.0
+      "frame": 0,
+      "sec": 0.0
     },
     {
       "name": "本編開始 新しい絵柄 45(30秒)",
-      "frame": 1740,
-      "sec": 72.5
+      "frame": 276,
+      "sec": 11.5
     },
     {
       "name": "絵柄.青パルス",
-      "frame": 1980,
-      "sec": 82.5
+      "frame": 496,
+      "sec": 20.7
     },
     {
       "name": "絵柄.きらめき",
-      "frame": 2076,
-      "sec": 86.5
+      "frame": 584,
+      "sec": 24.3
     },
     {
       "name": "本編終了",
-      "frame": 2460,
-      "sec": 102.5
+      "frame": 936,
+      "sec": 39.0
     },
     {
-      "name": "帰投(消灯)",
-      "frame": 2460,
-      "sec": 102.5
-    },
-    {
-      "name": "降下・着陸",
-      "frame": 3937,
-      "sec": 164.0
-    },
-    {
-      "name": "着陸完了",
-      "frame": 4417,
-      "sec": 184.0
+      "name": "終了(消灯ホバリング)",
+      "frame": 960,
+      "sec": 40.0
     }
   ],
   "formations": {
@@ -76,8 +67,8 @@
   },
   "lit_ratio_per_drone": {
     "min": 0.0,
-    "max": 0.163,
-    "mean": 0.132
+    "max": 0.686,
+    "mean": 0.55
   },
   "text_spacing_m": 0.0,
   "picture": {
@@ -94,10 +85,17 @@
     }
   },
   "transition_sim": {
-    "pairs_closer_than_1.8m": 0,
-    "closest_pairs": [],
-    "forced_arrivals": 1,
-    "path_keys": 385086,
+    "pairs_closer_than_1.8m": 1,
+    "closest_pairs": [
+      [
+        1.79,
+        201,
+        194,
+        213
+      ]
+    ],
+    "forced_arrivals": 31,
+    "path_keys": 33297,
     "limit_distance_patches": 0
   }
 }

@@ -1,43 +1,33 @@
 {
-  "max_vel_xy": 1.0664749239475217,
-  "max_vel_up": 2.35113525390625,
-  "max_vel_down": 1.797515869140625,
-  "max_accel": 2.7208623090871797,
-  "min_dist": 1.8040995415912013,
-  "min_dist_frame": 1557,
+  "max_vel_xy": 2.5260772705078125,
+  "max_vel_up": 1.460052490234375,
+  "max_vel_down": 1.43939208984375,
+  "max_accel": 1.2023425406486472,
+  "min_dist": 1.7981277001547171,
+  "min_dist_frame": 198,
   "min_dist_pair": [
-    169,
-    170
+    194,
+    213
   ],
-  "altitude_min_airborne": 20.458660125732422,
-  "altitude_max": 90.65927124023438,
+  "altitude_min_airborne": 40.5,
+  "altitude_max": 95.6343994140625,
   "n_violations": 0,
   "violations": [],
   "segments": [
     {
-      "from": "離陸(消灯)",
+      "from": "遷移(消灯)",
       "frame": 0,
       "sec": 0.0,
-      "max_vel_xy": 0.0,
-      "max_vel_up": 2.0,
-      "max_vel_down": -0.03,
-      "max_accel": 0.52,
-      "min_dist": 3.0
-    },
-    {
-      "from": "遷移(消灯)",
-      "frame": 360,
-      "sec": 15.0,
-      "max_vel_xy": 0.75,
-      "max_vel_up": 2.35,
-      "max_vel_down": 0.03,
-      "max_accel": 1.02,
+      "max_vel_xy": 2.53,
+      "max_vel_up": 1.46,
+      "max_vel_down": 1.44,
+      "max_accel": 1.2,
       "min_dist": 1.8
     },
     {
       "from": "本編開始 新しい絵柄 45(30秒)",
-      "frame": 1740,
-      "sec": 72.5,
+      "frame": 276,
+      "sec": 11.5,
       "max_vel_xy": 0.0,
       "max_vel_up": 0.0,
       "max_vel_down": -0.0,
@@ -46,8 +36,8 @@
     },
     {
       "from": "絵柄.青パルス",
-      "frame": 1980,
-      "sec": 82.5,
+      "frame": 496,
+      "sec": 20.7,
       "max_vel_xy": 0.0,
       "max_vel_up": 0.0,
       "max_vel_down": -0.0,
@@ -56,8 +46,8 @@
     },
     {
       "from": "絵柄.きらめき",
-      "frame": 2076,
-      "sec": 86.5,
+      "frame": 584,
+      "sec": 24.3,
       "max_vel_xy": 0.0,
       "max_vel_up": 0.0,
       "max_vel_down": -0.0,
@@ -66,23 +56,13 @@
     },
     {
       "from": "本編終了",
-      "frame": 2460,
-      "sec": 102.5,
-      "max_vel_xy": 1.07,
-      "max_vel_up": 0.56,
-      "max_vel_down": 1.8,
-      "max_accel": 2.72,
-      "min_dist": 1.8
-    },
-    {
-      "from": "降下・着陸",
-      "frame": 3937,
-      "sec": 164.0,
+      "frame": 936,
+      "sec": 39.0,
       "max_vel_xy": 0.0,
-      "max_vel_up": -0.03,
-      "max_vel_down": 1.5,
-      "max_accel": 0.29,
-      "min_dist": 3.0
+      "max_vel_up": 0.0,
+      "max_vel_down": -0.0,
+      "max_accel": 0.0,
+      "min_dist": 1.8
     }
   ],
   "limits": {
@@ -101,6 +81,6 @@
   },
   "sample_step_sec": 0.125,
   "n_drones": 300,
-  "frames": 4417,
-  "duration_sec": 184.0
+  "frames": 960,
+  "duration_sec": 40.0
 }

@@ -60,6 +60,9 @@ PICTURE_JSON = os.environ.get("SHOW_PICTURE_JSON", "formations/picture_45_mansio
 PICTURE_SCALE = float(os.environ.get("SHOW_PICTURE_SCALE", "1.2"))   # 点間隔1.5m→1.8m(安全距離+余裕)に拡大
 PICTURE_DATA = None          # ここに dict を直接入れるとファイルを読まない(リモート実行用)
 CONTENT_SEC = 30            # 30s モードの本編尺
+START_MODE = os.environ.get("SHOW_START", "airborne")   # "airborne": 空中待機グリッドから開始(全体40秒) / "ground": 地上離陸〜着陸込み
+TOTAL_SEC = float(os.environ.get("SHOW_TOTAL_SEC", "40"))   # airborne モードの全体尺
+STANDBY_COLS, STANDBY_ROWS, STANDBY_PITCH = 20, 15, 3.5     # 空中待機グリッド(観客正面の鉛直面・70×49m)
 SEED = 1934
 SHOW_NAME = "20261031_Halloween_SKULL_Animation_v01"
 
@@ -846,14 +849,11 @@ class ShowBuilder:
 
         self.oya_takeoff = new_empty("oya.takeoff", col_oya, size=3, dtype="ARROWS")
         self.oya_show = new_empty("oya.show", col_oya, size=3, dtype="ARROWS")
-        col_grid = collection("Takeoff grid", col_form)
-        x0 = -(GRID_COLS - 1) * GRID_PITCH / 2
-        y0 = -(GRID_ROWS - 1) * GRID_PITCH / 2
+        col_grid = collection("Takeoff grid" if START_MODE == "ground" else "Standby grid", col_form)
         self.grid = []
         for i in range(N):
-            r, c = divmod(i, GRID_COLS)
-            pos = (x0 + c * GRID_PITCH, y0 + r * GRID_PITCH, 0.0)
-            ge = new_empty(f"Takeoff grid - {i + 1}", col_grid, loc=pos, parent=self.oya_takeoff)
+            pos = tuple(self.start_positions()[i])
+            ge = new_empty(f"{'Takeoff' if START_MODE == 'ground' else 'Standby'} grid - {i + 1}", col_grid, loc=pos, parent=self.oya_takeoff)
             self.grid.append(ge)
             d = bpy.data.objects.new(f"Drone {i + 1}", tpl.data.copy())
             d.location = pos
@@ -876,15 +876,29 @@ class ShowBuilder:
             d.keyframe_insert(f'constraints["{con.name}"].influence', frame=-1)
             self.drones.append(d)
             self.mats.append(mat)
-        # 離陸: 親を 0→20m
-        self.oya_takeoff.location = (0, 0, 0)
-        self.oya_takeoff.keyframe_insert("location", frame=0)
-        self.oya_takeoff.location = (0, 0, TAKEOFF_ALT)
-        self.oya_takeoff.keyframe_insert("location", frame=sec(TAKEOFF_SEC))
-        self.marker("離陸(消灯)", 0)
-        self.frame = sec(TAKEOFF_SEC)
+        if START_MODE == "ground":
+            # 離陸: 親を 0→20m
+            self.oya_takeoff.location = (0, 0, 0)
+            self.oya_takeoff.keyframe_insert("location", frame=0)
+            self.oya_takeoff.location = (0, 0, TAKEOFF_ALT)
+            self.oya_takeoff.keyframe_insert("location", frame=sec(TAKEOFF_SEC))
+            self.marker("離陸(消灯)", 0)
+            self.frame = sec(TAKEOFF_SEC)
+        else:
+            self.marker("空中待機グリッド(消灯)", 0)
+            self.frame = 0
         for i in range(N):
             self.led[i].append((-1, BLACK, "CONSTANT"))
+
+    def start_positions(self):
+        """開始位置: ground=地上30×10グリッド(z=0) / airborne=観客正面の鉛直面に並ぶ空中待機グリッド"""
+        if START_MODE == "ground":
+            x0 = -(GRID_COLS - 1) * GRID_PITCH / 2
+            y0 = -(GRID_ROWS - 1) * GRID_PITCH / 2
+            return np.array([(x0 + (i % GRID_COLS) * GRID_PITCH, y0 + (i // GRID_COLS) * GRID_PITCH, 0.0) for i in range(N)])
+        x0 = -(STANDBY_COLS - 1) * STANDBY_PITCH / 2
+        z0 = -(STANDBY_ROWS - 1) * STANDBY_PITCH / 2
+        return np.array([(x0 + (i % STANDBY_COLS) * STANDBY_PITCH, 0.0, z0 + (i // STANDBY_COLS) * STANDBY_PITCH) for i in range(N)]) + CENTER
 
     def marker(self, name, frame):
         self.markers.append((name, frame))
@@ -931,9 +945,13 @@ class ShowBuilder:
         # 余り機体の駐機位置(絵の後ろ側・消灯)
         n_park = N - len(empties)
         park = []
+        ztop = float(allpts[:, 2].max())
         for k in range(n_park):
             r, c = divmod(k, 12)
-            park.append((-22 + c * 4.0, 30.0 + r * 4.0, -10.0 + (k % 3) * 2.0))
+            if START_MODE == "ground":
+                park.append((-22 + c * 4.0, 30.0 + r * 4.0, -10.0 + (k % 3) * 2.0))   # 絵の後ろ側
+            else:
+                park.append((-22 + c * 4.0, 0.0, ztop + 5.0 + r * 4.0))               # 絵の上の行(同一平面・消灯)
         for k, p in enumerate(park):
             e = new_empty(f"{name}.park.{k}", col, loc=p, parent=root)
             empties.append(e)
@@ -956,15 +974,13 @@ class ShowBuilder:
     LOG_STEP = 3
 
     def _init_plan(self):
-        x0 = -(GRID_COLS - 1) * GRID_PITCH / 2
-        y0 = -(GRID_ROWS - 1) * GRID_PITCH / 2
-        self.grid_pos = np.array([(x0 + (i % GRID_COLS) * GRID_PITCH, y0 + (i // GRID_COLS) * GRID_PITCH, 0.0) for i in range(N)])
-        self.pos = self.grid_pos + np.array([0, 0, TAKEOFF_ALT])
+        self.grid_pos = self.start_positions()
+        self.pos = self.grid_pos + (np.array([0, 0, TAKEOFF_ALT]) if START_MODE == "ground" else 0.0)
         self.vel = np.zeros((N, 3))
         self.mission = [None] * N
         self.missions_done = []
         self.hist = {}          # frame -> 全機位置(LOG_STEP 刻み)
-        self.sim_frame = sec(TAKEOFF_SEC)
+        self.sim_frame = sec(TAKEOFF_SEC) if START_MODE == "ground" else 0
         self.group_id = 0
 
     def set_mission(self, di, E, a, B, target):
@@ -1028,7 +1044,7 @@ class ShowBuilder:
             m["frames"].append(f)
             m["P"].append(p[k].copy())
             arrived = f >= m["B"] and np.linalg.norm(p[k] - m["E"]) < 0.06 and np.linalg.norm(v[k]) < 0.1
-            timeout = f >= m["B"] + sec(12)
+            timeout = f >= m["B"] + sec(12 if START_MODE == "ground" else 5)
             if arrived or timeout:
                 m["done"] = f
                 m["forced"] = bool(timeout and not arrived)
@@ -1427,10 +1443,13 @@ def make_picture(data=None, path=None, scale=PICTURE_SCALE):
     return parts, meta
 
 
-def page_picture_30s(sb, F, f_in, meta):
+def page_picture_30s(sb, F, f_in, meta, content_sec=None):
     """絵柄(ロゴ)本編30秒: 0-3s 白を左→右にスイープ点灯 / 2-5s 青を左→右 / 10s・18s 青がパルス /
-    14s・22s 左→右へ白いきらめきの波 / 28.5-30s 消灯。暗い点(dark)は位置にいるが点灯しない"""
-    f_out = f_in + sec(CONTENT_SEC)
+    14s・22s 左→右へ白いきらめきの波 / 28.5-30s 消灯。暗い点(dark)は位置にいるが点灯しない。
+    content_sec を短くすると各イベント時刻を比例して詰める"""
+    content_sec = CONTENT_SEC if content_sec is None else content_sec
+    k = content_sec / 30.0
+    f_out = f_in + sec(content_sec)
     r = random.Random(45)
     tgt = F["rest_world"]
     xs = tgt[:, 0]
@@ -1447,18 +1466,18 @@ def page_picture_30s(sb, F, f_in, meta):
         sb.fade(di, ff, ff + sec(0.4), BLACK, col)
         sb.lit_frames[di] += f_out - ff
         if part != "white":                       # 青: 10s・18s に 2回パルス
-            for t_s in (10.0, 18.0):
+            for t_s in (10.0 * k, 18.0 * k):
                 sb.key(di, f_in + sec(t_s), col, "LINEAR")
                 sb.key(di, f_in + sec(t_s + 0.5), tuple(min(1.0, v * 1.6 + 0.3) for v in col), "LINEAR")
                 sb.key(di, f_in + sec(t_s + 1.2), col, "CONSTANT")
-        for t_s in (14.0, 22.0):                  # 左→右へ走るきらめき(白)
+        for t_s in (14.0 * k, 22.0 * k):          # 左→右へ走るきらめき(白)
             tw = f_in + sec(t_s + u * 2.5)
             sb.key(di, tw, col, "LINEAR")
             sb.key(di, tw + sec(0.25), COL["white"], "LINEAR")
             sb.key(di, tw + sec(0.7), col, "CONSTANT")
     sb.blackout(range(N), f_out, dur=sec(1.5))
-    sb.marker("絵柄.青パルス", f_in + sec(10))
-    sb.marker("絵柄.きらめき", f_in + sec(14))
+    sb.marker("絵柄.青パルス", f_in + sec(10 * k))
+    sb.marker("絵柄.きらめき", f_in + sec(14 * k))
     sb.pages.append((f"01 {meta['name']}(ロゴ・スイープ点灯・パルス・きらめき)", f_in, f_out, F["n_lit"]))
     return f_out
 
@@ -1485,8 +1504,24 @@ def build_show():
         sb.marker("遷移(消灯)", f)
         f_in = sb.move_all(F_pic, f)
         sb.marker(f"本編開始 {meta['name']}(30秒)", f_in)
-        f_out = page_picture_30s(sb, F_pic, f_in, meta)
+        content_sec = CONTENT_SEC
+        if START_MODE == "airborne":
+            content_sec = min(CONTENT_SEC, TOTAL_SEC - 1.0 - f_in / FPS)   # 全体尺に収める(末尾1秒は消灯ホールド)
+            if content_sec < 15:
+                raise RuntimeError(f"整列に {f_in / FPS:.1f}s かかり本編が {content_sec:.1f}s しか取れない。STANDBY_PITCH を詰めるか TOTAL_SEC を延ばす")
+            print(f"  airborne: 整列 {f_in / FPS:.1f}s, 本編 {content_sec:.1f}s, 全体 {TOTAL_SEC}s")
+        f_out = page_picture_30s(sb, F_pic, f_in, meta, content_sec)
         sb.marker("本編終了", f_out)
+        if START_MODE == "airborne":
+            # 40秒版: 消灯のまま絵柄位置でホバリングして終了(着陸は運行側)
+            f_end = sec(TOTAL_SEC)
+            sb.marker("終了(消灯ホバリング)", f_end)
+            scene.frame_end = f_end
+            scene.use_preview_range = False
+            for i in range(N):
+                sb.key(i, f_end, BLACK, "CONSTANT")
+            sb.picture_meta = meta
+            return finish_show(sb, scene, f_out, f_end, 0.0, (0, f_end))
         sb.marker("帰投(消灯)", f_out)
         grid_f = {"name": "Takeoff grid", "empties": sb.grid, "part": ["grid"] * N,
                   "rest_world": sb.grid_pos + np.array([0, 0, TAKEOFF_ALT])}
@@ -1768,7 +1803,7 @@ def finish_show(sb, scene, f_land_in, f_end, text_spacing, content):
 
     # 尺割り表
     plan = {
-        "show": SHOW_NAME, "mode": SHOW_MODE, "fps": FPS, "drones": N, "frame_end": f_end,
+        "show": SHOW_NAME, "mode": SHOW_MODE, "start": START_MODE, "fps": FPS, "drones": N, "frame_end": f_end,
         "content_frames": [content[0], content[1]], "content_sec": round((content[1] - content[0]) / FPS, 1),
         "duration_sec": round(f_end / FPS, 1),
         "pages": [{"page": p, "frame_in": a, "frame_out": b, "sec_in": round(a / FPS, 1), "sec_out": round(b / FPS, 1),

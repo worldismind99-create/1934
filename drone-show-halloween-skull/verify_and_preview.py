@@ -78,6 +78,8 @@ def safety(frames, P):
     rep["min_dist_frame"] = int(frames[kmin])
     rep["min_dist_pair"] = minpair[kmin]
     air = (frames > 24 * 20) & (frames < frames[-1] - 24 * 25)   # 離陸完了〜降下開始
+    if not air.any():
+        air = frames >= 0
     rep["altitude_min_airborne"] = float(P[air][:, :, 2].min()) if air.any() else None
     rep["altitude_max"] = float(P[:, :, 2].max())
     viol = []
